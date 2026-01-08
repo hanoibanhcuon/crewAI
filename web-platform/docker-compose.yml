@@ -1,0 +1,127 @@
+services:
+  # PostgreSQL Database
+  # Port 5435 để tránh xung đột với nira-postgres (5433), nira-erp-db (5434)
+  postgres:
+    image: postgres:15-alpine
+    container_name: crewai_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crewai_platform
+    ports:
+      - "5435:5432"
+    volumes:
+      - crewai_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crewai_network
+    restart: unless-stopped
+
+  # Redis
+  # Port 6381 để tránh xung đột với nira-redis (6379)
+  redis:
+    image: redis:7-alpine
+    container_name: crewai_redis
+    ports:
+      - "6381:6379"
+    volumes:
+      - crewai_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crewai_network
+    restart: unless-stopped
+
+  # Backend API
+  # Port 8082 để tránh xung đột với nira-api (8080), nira-erp-api (8081)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: crewai_backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/crewai_platform
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:-crewai-super-secret-key-2026}
+      - ENCRYPTION_SALT=${ENCRYPTION_SALT:-crewai-encryption-salt}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - SERPER_API_KEY=${SERPER_API_KEY:-}
+      - CORS_ORIGINS=http://localhost:3010,http://127.0.0.1:3010
+    ports:
+      - "8082:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - crewai_network
+    restart: unless-stopped
+
+  # Celery Worker
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: crewai_celery
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/crewai_platform
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:-crewai-super-secret-key-2026}
+      - ENCRYPTION_SALT=${ENCRYPTION_SALT:-crewai-encryption-salt}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    depends_on:
+      - backend
+      - redis
+    volumes:
+      - ./backend:/app
+    command: celery -A app.workers.celery_app worker --loglevel=info
+    networks:
+      - crewai_network
+    restart: unless-stopped
+
+  # Frontend
+  # Port 3010 để tránh xung đột với các port đang sử dụng
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: crewai_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8082
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8082
+    ports:
+      - "3010:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+    networks:
+      - crewai_network
+    restart: unless-stopped
+
+volumes:
+  crewai_postgres_data:
+    name: crewai_postgres_data
+  crewai_redis_data:
+    name: crewai_redis_data
+
+networks:
+  crewai_network:
+    name: crewai_network
+    driver: bridge
