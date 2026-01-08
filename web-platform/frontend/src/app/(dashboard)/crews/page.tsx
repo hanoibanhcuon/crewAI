@@ -1,10 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Plus,
   Search,
@@ -15,51 +34,137 @@ import {
   Layers,
   Play,
   Rocket,
+  Loader2,
+  StopCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { crewsApi } from "@/lib/api";
+import { toast } from "sonner";
 
-// Mock data
-const crews = [
-  {
-    id: "1",
-    name: "Research & Writing Crew",
-    description: "A crew for researching topics and writing content",
-    process: "sequential",
-    agents_count: 2,
-    tasks_count: 3,
-    is_deployed: true,
-    environment: "production",
-  },
-  {
-    id: "2",
-    name: "Data Analysis Crew",
-    description: "Analyze data and generate reports",
-    process: "hierarchical",
-    agents_count: 3,
-    tasks_count: 4,
-    is_deployed: false,
-    environment: "development",
-  },
-  {
-    id: "3",
-    name: "Customer Support Crew",
-    description: "Handle customer inquiries and support tickets",
-    process: "sequential",
-    agents_count: 2,
-    tasks_count: 2,
-    is_deployed: true,
-    environment: "staging",
-  },
-];
+interface Crew {
+  id: string;
+  name: string;
+  description: string;
+  process: string;
+  agents_count?: number;
+  tasks_count?: number;
+  is_deployed?: boolean;
+  environment?: string;
+}
 
 export default function CrewsPage() {
   const [search, setSearch] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedCrew, setSelectedCrew] = useState<Crew | null>(null);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  // Fetch crews from API
+  const { data: crews = [], isLoading, error } = useQuery({
+    queryKey: ["crews"],
+    queryFn: async () => {
+      const response = await crewsApi.list();
+      return response.data;
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await crewsApi.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crews"] });
+      toast.success("Crew deleted successfully");
+      setDeleteDialogOpen(false);
+      setSelectedCrew(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to delete crew");
+    },
+  });
+
+  // Duplicate mutation
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await crewsApi.duplicate(id);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crews"] });
+      toast.success("Crew duplicated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to duplicate crew");
+    },
+  });
+
+  // Deploy mutation
+  const deployMutation = useMutation({
+    mutationFn: async ({ id, environment }: { id: string; environment: string }) => {
+      const response = await crewsApi.deploy(id, environment);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crews"] });
+      toast.success("Crew deployed successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to deploy crew");
+    },
+  });
+
+  const handleDelete = (crew: Crew) => {
+    setSelectedCrew(crew);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedCrew) {
+      deleteMutation.mutate(selectedCrew.id);
+    }
+  };
+
+  const handleDuplicate = (crew: Crew) => {
+    duplicateMutation.mutate(crew.id);
+  };
+
+  const handleRun = (crew: Crew) => {
+    router.push(`/crews/${crew.id}/run`);
+  };
+
+  const handleDeploy = (crew: Crew, environment: string) => {
+    deployMutation.mutate({ id: crew.id, environment });
+  };
 
   const filteredCrews = crews.filter(
-    (crew) =>
+    (crew: Crew) =>
       crew.name.toLowerCase().includes(search.toLowerCase()) ||
       crew.description.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Crews">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout title="Crews">
+        <div className="flex flex-col items-center justify-center h-64">
+          <p className="text-destructive mb-4">Failed to load crews</p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["crews"] })}>
+            Retry
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout
@@ -88,7 +193,7 @@ export default function CrewsPage() {
 
       {/* Crews Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredCrews.map((crew) => (
+        {filteredCrews.map((crew: Crew) => (
           <Card key={crew.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-start justify-between space-y-0">
               <div className="flex items-center gap-3">
@@ -97,21 +202,62 @@ export default function CrewsPage() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">{crew.name}</CardTitle>
-                  <CardDescription className="capitalize">{crew.process} process</CardDescription>
+                  <CardDescription className="capitalize">{crew.process || "sequential"} process</CardDescription>
                 </div>
               </div>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleRun(crew)}>
+                    <Play className="mr-2 h-4 w-4" />
+                    Run
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/crews/${crew.id}`}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDuplicate(crew)}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleDeploy(crew, "development")}>
+                    <Rocket className="mr-2 h-4 w-4" />
+                    Deploy to Dev
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDeploy(crew, "staging")}>
+                    <Rocket className="mr-2 h-4 w-4" />
+                    Deploy to Staging
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDeploy(crew, "production")}>
+                    <Rocket className="mr-2 h-4 w-4" />
+                    Deploy to Prod
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => handleDelete(crew)}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">{crew.description}</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
-                  {crew.agents_count} agents
+                  {crew.agents_count || 0} agents
                 </span>
                 <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
-                  {crew.tasks_count} tasks
+                  {crew.tasks_count || 0} tasks
                 </span>
                 {crew.is_deployed && (
                   <span className="inline-flex items-center rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2.5 py-0.5 text-xs font-medium">
@@ -120,7 +266,7 @@ export default function CrewsPage() {
                 )}
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="flex-1">
+                <Button size="sm" className="flex-1" onClick={() => handleRun(crew)}>
                   <Play className="mr-2 h-4 w-4" />
                   Run
                 </Button>
@@ -129,7 +275,12 @@ export default function CrewsPage() {
                     <Edit className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeploy(crew, "production")}
+                  disabled={deployMutation.isPending}
+                >
                   <Rocket className="h-4 w-4" />
                 </Button>
               </div>
@@ -153,6 +304,31 @@ export default function CrewsPage() {
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Crew</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{selectedCrew?.name}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

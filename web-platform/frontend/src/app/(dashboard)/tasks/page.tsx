@@ -1,10 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Plus,
   Search,
@@ -13,45 +30,111 @@ import {
   Trash,
   Copy,
   ListTodo,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { tasksApi } from "@/lib/api";
+import { toast } from "sonner";
 
-// Mock data
-const tasks = [
-  {
-    id: "1",
-    name: "Research Task",
-    description: "Conduct thorough research on the given topic",
-    expected_output: "A comprehensive report with key findings",
-    agent_name: "Research Analyst",
-    human_input: false,
-  },
-  {
-    id: "2",
-    name: "Write Blog Post",
-    description: "Write an engaging blog post based on research",
-    expected_output: "A 1000-word blog post in markdown format",
-    agent_name: "Content Writer",
-    human_input: true,
-  },
-  {
-    id: "3",
-    name: "Data Analysis",
-    description: "Analyze the provided dataset and extract insights",
-    expected_output: "Statistical analysis with visualizations",
-    agent_name: "Data Analyst",
-    human_input: false,
-  },
-];
+interface Task {
+  id: string;
+  name: string;
+  description: string;
+  expected_output: string;
+  agent_id?: string;
+  agent_name?: string;
+  human_input: boolean;
+}
 
 export default function TasksPage() {
   const [search, setSearch] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const queryClient = useQueryClient();
+
+  // Fetch tasks from API
+  const { data: tasks = [], isLoading, error } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: async () => {
+      const response = await tasksApi.list();
+      return response.data;
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await tasksApi.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task deleted successfully");
+      setDeleteDialogOpen(false);
+      setSelectedTask(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to delete task");
+    },
+  });
+
+  // Duplicate mutation
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await tasksApi.duplicate(id);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task duplicated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to duplicate task");
+    },
+  });
+
+  const handleDelete = (task: Task) => {
+    setSelectedTask(task);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedTask) {
+      deleteMutation.mutate(selectedTask.id);
+    }
+  };
+
+  const handleDuplicate = (task: Task) => {
+    duplicateMutation.mutate(task.id);
+  };
 
   const filteredTasks = tasks.filter(
-    (task) =>
+    (task: Task) =>
       task.name.toLowerCase().includes(search.toLowerCase()) ||
       task.description.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Tasks">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout title="Tasks">
+        <div className="flex flex-col items-center justify-center h-64">
+          <p className="text-destructive mb-4">Failed to load tasks</p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["tasks"] })}>
+            Retry
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout
@@ -80,7 +163,7 @@ export default function TasksPage() {
 
       {/* Tasks Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredTasks.map((task) => (
+        {filteredTasks.map((task: Task) => (
           <Card key={task.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-start justify-between space-y-0">
               <div className="flex items-center gap-3">
@@ -89,12 +172,37 @@ export default function TasksPage() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">{task.name}</CardTitle>
-                  <CardDescription>Assigned to: {task.agent_name}</CardDescription>
+                  <CardDescription>
+                    {task.agent_name ? `Assigned to: ${task.agent_name}` : "Unassigned"}
+                  </CardDescription>
                 </div>
               </div>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/tasks/${task.id}`}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDuplicate(task)}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => handleDelete(task)}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
@@ -115,10 +223,19 @@ export default function TasksPage() {
                     Edit
                   </Link>
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDuplicate(task)}
+                  disabled={duplicateMutation.isPending}
+                >
                   <Copy className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDelete(task)}
+                >
                   <Trash className="h-4 w-4" />
                 </Button>
               </div>
@@ -142,6 +259,31 @@ export default function TasksPage() {
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{selectedTask?.name}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

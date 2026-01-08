@@ -1,10 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Plus,
   Search,
@@ -14,45 +33,115 @@ import {
   Copy,
   GitBranch,
   Play,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { flowsApi } from "@/lib/api";
+import { toast } from "sonner";
 
-// Mock data
-const flows = [
-  {
-    id: "1",
-    name: "Content Pipeline",
-    description: "Research, write, and publish content automatically",
-    steps_count: 5,
-    is_deployed: true,
-    environment: "production",
-  },
-  {
-    id: "2",
-    name: "Data Processing Flow",
-    description: "Ingest, process, and analyze data",
-    steps_count: 4,
-    is_deployed: false,
-    environment: "development",
-  },
-  {
-    id: "3",
-    name: "Customer Onboarding",
-    description: "Automated customer onboarding workflow",
-    steps_count: 6,
-    is_deployed: true,
-    environment: "staging",
-  },
-];
+interface Flow {
+  id: string;
+  name: string;
+  description: string;
+  steps_count?: number;
+  is_deployed?: boolean;
+  environment?: string;
+}
 
 export default function FlowsPage() {
   const [search, setSearch] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedFlow, setSelectedFlow] = useState<Flow | null>(null);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  // Fetch flows from API
+  const { data: flows = [], isLoading, error } = useQuery({
+    queryKey: ["flows"],
+    queryFn: async () => {
+      const response = await flowsApi.list();
+      return response.data;
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await flowsApi.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flows"] });
+      toast.success("Flow deleted successfully");
+      setDeleteDialogOpen(false);
+      setSelectedFlow(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to delete flow");
+    },
+  });
+
+  // Duplicate mutation
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await flowsApi.duplicate(id);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flows"] });
+      toast.success("Flow duplicated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to duplicate flow");
+    },
+  });
+
+  const handleDelete = (flow: Flow) => {
+    setSelectedFlow(flow);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedFlow) {
+      deleteMutation.mutate(selectedFlow.id);
+    }
+  };
+
+  const handleDuplicate = (flow: Flow) => {
+    duplicateMutation.mutate(flow.id);
+  };
+
+  const handleRun = (flow: Flow) => {
+    router.push(`/flows/${flow.id}/run`);
+  };
 
   const filteredFlows = flows.filter(
-    (flow) =>
+    (flow: Flow) =>
       flow.name.toLowerCase().includes(search.toLowerCase()) ||
       flow.description.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Flows">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout title="Flows">
+        <div className="flex flex-col items-center justify-center h-64">
+          <p className="text-destructive mb-4">Failed to load flows</p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["flows"] })}>
+            Retry
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout
@@ -81,7 +170,7 @@ export default function FlowsPage() {
 
       {/* Flows Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredFlows.map((flow) => (
+        {filteredFlows.map((flow: Flow) => (
           <Card key={flow.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-start justify-between space-y-0">
               <div className="flex items-center gap-3">
@@ -90,12 +179,40 @@ export default function FlowsPage() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">{flow.name}</CardTitle>
-                  <CardDescription>{flow.steps_count} steps</CardDescription>
+                  <CardDescription>{flow.steps_count || 0} steps</CardDescription>
                 </div>
               </div>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleRun(flow)}>
+                    <Play className="mr-2 h-4 w-4" />
+                    Run
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/flows/${flow.id}/edit`}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDuplicate(flow)}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => handleDelete(flow)}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">{flow.description}</p>
@@ -107,7 +224,7 @@ export default function FlowsPage() {
                 )}
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="flex-1">
+                <Button size="sm" className="flex-1" onClick={() => handleRun(flow)}>
                   <Play className="mr-2 h-4 w-4" />
                   Run
                 </Button>
@@ -116,7 +233,12 @@ export default function FlowsPage() {
                     <Edit className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDuplicate(flow)}
+                  disabled={duplicateMutation.isPending}
+                >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
@@ -140,6 +262,31 @@ export default function FlowsPage() {
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Flow</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{selectedFlow?.name}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
