@@ -64,7 +64,7 @@ export default function CrewsPage() {
     queryKey: ["crews"],
     queryFn: async () => {
       const response = await crewsApi.list();
-      return response.data;
+      return response.data.items || [];
     },
   });
 

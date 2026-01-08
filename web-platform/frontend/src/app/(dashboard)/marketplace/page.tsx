@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -97,11 +97,7 @@ export default function MarketplacePage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadTemplates();
-  }, [typeFilter]);
-
-  const loadTemplates = async () => {
+  const loadTemplates = useCallback(async () => {
     try {
       const response = await templatesApi.list({
         template_type: typeFilter || undefined,
@@ -115,7 +111,11 @@ export default function MarketplacePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [typeFilter, search]);
+
+  useEffect(() => {
+    loadTemplates();
+  }, [loadTemplates]);
 
   // Debounced search
   useEffect(() => {
@@ -123,7 +123,7 @@ export default function MarketplacePage() {
       loadTemplates();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [loadTemplates]);
 
   const filteredTemplates = templates.filter((template) => {
     const matchesSearch =

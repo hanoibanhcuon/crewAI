@@ -125,24 +125,46 @@ export default function SettingsPage() {
     },
   });
 
-  // Save API key mutation
+  // Save API key mutation with optimistic update
   const saveApiKeyMutation = useMutation({
     mutationFn: async ({ provider, api_key }: { provider: string; api_key: string }) => {
       const response = await usersApi.setApiKey(provider, api_key);
       return response.data;
     },
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["apiKeys"] });
+      // Snapshot previous value
+      const previousApiKeys = queryClient.getQueryData<ApiKeyStatus[]>(["apiKeys"]);
+      // Optimistically update
+      queryClient.setQueryData<ApiKeyStatus[]>(["apiKeys"], (old = []) => {
+        const exists = old.find(k => k.provider === variables.provider);
+        if (exists) {
+          return old.map(k => k.provider === variables.provider ? { ...k, is_set: true } : k);
+        }
+        return [...old, { provider: variables.provider, is_set: true }];
+      });
+      return { previousApiKeys };
+    },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["apiKeys"] });
       toast.success(`${variables.provider.charAt(0).toUpperCase() + variables.provider.slice(1)} API key saved!`);
-      // Clear the specific input
+      // Clear the specific input after success
       if (variables.provider === "openai") setOpenaiKey("");
       if (variables.provider === "anthropic") setAnthropicKey("");
       if (variables.provider === "serper") setSerperKey("");
       setSavingKey(null);
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
+      // Rollback on error
+      if (context?.previousApiKeys) {
+        queryClient.setQueryData(["apiKeys"], context.previousApiKeys);
+      }
       toast.error(error.response?.data?.detail || "Failed to save API key");
       setSavingKey(null);
+    },
+    onSettled: () => {
+      // Refetch to ensure sync with server
+      queryClient.invalidateQueries({ queryKey: ["apiKeys"] });
     },
   });
 

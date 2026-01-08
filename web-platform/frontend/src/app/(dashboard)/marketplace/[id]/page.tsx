@@ -319,6 +319,7 @@ export default function TemplateDetailPage() {
                   <CardContent>
                     <div className="grid grid-cols-2 gap-4">
                       {template.screenshots.map((screenshot, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           key={i}
                           src={screenshot}

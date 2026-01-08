@@ -136,6 +136,7 @@ export function CodeEditor({
         editorRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Monaco, language, readOnly, theme]);
 
   // Update value when it changes externally

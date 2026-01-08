@@ -57,7 +57,7 @@ export default function TasksPage() {
     queryKey: ["tasks"],
     queryFn: async () => {
       const response = await tasksApi.list();
-      return response.data;
+      return response.data.items || [];
     },
   });
 

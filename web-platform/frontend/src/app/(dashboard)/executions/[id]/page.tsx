@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout";
@@ -176,16 +176,16 @@ export default function ExecutionDetailPage() {
     },
   });
 
-  const fetchExecution = async () => {
+  const fetchExecution = useCallback(async () => {
     try {
       const response = await executionsApi.get(executionId);
       setExecution(response.data);
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to load execution");
     }
-  };
+  }, [executionId]);
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       const response = await executionsApi.getLogs(executionId, {
         level: logLevelFilter,
@@ -195,16 +195,16 @@ export default function ExecutionDetailPage() {
     } catch (err) {
       console.error("Failed to fetch logs:", err);
     }
-  };
+  }, [executionId, logLevelFilter]);
 
-  const fetchTraces = async () => {
+  const fetchTraces = useCallback(async () => {
     try {
       const response = await executionsApi.getTraces(executionId);
       setTraces(response.data || []);
     } catch (err) {
       console.error("Failed to fetch traces:", err);
     }
-  };
+  }, [executionId]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -213,11 +213,11 @@ export default function ExecutionDetailPage() {
       setIsLoading(false);
     };
     loadData();
-  }, [executionId]);
+  }, [fetchExecution, fetchLogs, fetchTraces]);
 
   useEffect(() => {
     fetchLogs();
-  }, [logLevelFilter]);
+  }, [fetchLogs]);
 
   useEffect(() => {
     if (autoScroll) {
@@ -235,7 +235,7 @@ export default function ExecutionDetailPage() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, fetchExecution, fetchLogs]);
 
   const handleCancel = async () => {
     try {

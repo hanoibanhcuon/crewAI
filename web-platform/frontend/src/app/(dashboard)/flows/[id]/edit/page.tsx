@@ -142,6 +142,7 @@ export default function FlowEditorPage() {
       }
     };
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flowId, isNew]);
 
   const onConnect = useCallback(

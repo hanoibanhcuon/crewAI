@@ -120,6 +120,7 @@ export default function TeamsPage() {
 
   useEffect(() => {
     loadTeams();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadTeams = async () => {

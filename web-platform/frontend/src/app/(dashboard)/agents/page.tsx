@@ -57,7 +57,7 @@ export default function AgentsPage() {
     queryKey: ["agents"],
     queryFn: async () => {
       const response = await agentsApi.list();
-      return response.data;
+      return response.data.items || [];
     },
   });
 

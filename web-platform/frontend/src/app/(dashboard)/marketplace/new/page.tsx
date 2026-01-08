@@ -38,7 +38,7 @@ import {
   Package,
   FileText,
   Tag,
-  Image,
+  Image as ImageIcon,
   DollarSign,
 } from "lucide-react";
 import Link from "next/link";
@@ -243,7 +243,7 @@ export default function NewTemplatePage() {
             Metadata
           </TabsTrigger>
           <TabsTrigger value="media" className="flex items-center gap-2">
-            <Image className="h-4 w-4" />
+            <ImageIcon className="h-4 w-4" />
             Media
           </TabsTrigger>
         </TabsList>
@@ -614,6 +614,7 @@ export default function NewTemplatePage() {
                 </div>
                 {formData.preview_image && (
                   <div className="border rounded-lg p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={formData.preview_image}
                       alt="Preview"
@@ -650,6 +651,7 @@ export default function NewTemplatePage() {
                   <div className="grid grid-cols-2 gap-2">
                     {screenshots.map((url, i) => (
                       <div key={i} className="relative border rounded-lg p-1">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={url}
                           alt={`Screenshot ${i + 1}`}

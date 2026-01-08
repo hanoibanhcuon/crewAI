@@ -138,6 +138,7 @@ export default function TriggersPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -455,7 +456,7 @@ export default function TriggersPage() {
                       placeholder="0 9 * * *"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Example: "0 9 * * *" runs daily at 9 AM
+                      Example: &quot;0 9 * * *&quot; runs daily at 9 AM
                     </p>
                   </div>
                 )}
@@ -761,7 +762,7 @@ export default function TriggersPage() {
                       placeholder="0 9 * * *"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Example: "0 9 * * *" runs daily at 9 AM
+                      Example: &quot;0 9 * * *&quot; runs daily at 9 AM
                     </p>
                   </div>
                 )}

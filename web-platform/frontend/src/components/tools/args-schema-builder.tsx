@@ -169,7 +169,7 @@ export function ArgsSchemaBuilder({
           <Settings2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">No arguments defined</p>
           <p className="text-xs">
-            Click "Add Argument" to define tool input parameters
+            Click &quot;Add Argument&quot; to define tool input parameters
           </p>
         </div>
       ) : (

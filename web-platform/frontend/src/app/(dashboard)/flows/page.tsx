@@ -60,7 +60,7 @@ export default function FlowsPage() {
     queryKey: ["flows"],
     queryFn: async () => {
       const response = await flowsApi.list();
-      return response.data;
+      return response.data.items || [];
     },
   });
 

@@ -108,7 +108,7 @@ export default function ToolsPage() {
     queryKey: ["tools"],
     queryFn: async () => {
       const response = await toolsApi.list();
-      return response.data;
+      return response.data.items || [];
     },
   });
 

@@ -405,7 +405,7 @@ export default function NewToolPage() {
                 <div>
                   <CardTitle>Tool Code</CardTitle>
                   <CardDescription>
-                    Write Python code for your custom tool using CrewAI's
+                    Write Python code for your custom tool using CrewAI&apos;s
                     BaseTool
                   </CardDescription>
                 </div>

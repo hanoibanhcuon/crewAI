@@ -18,8 +18,8 @@ export default function AuthLayout({
         </div>
         <div>
           <blockquote className="text-lg">
-            "Build, deploy, and manage AI agent crews with ease. The most
-            powerful platform for orchestrating autonomous AI agents."
+            &quot;Build, deploy, and manage AI agent crews with ease. The most
+            powerful platform for orchestrating autonomous AI agents.&quot;
           </blockquote>
           <footer className="mt-4 text-sm opacity-80">
             Powered by CrewAI
