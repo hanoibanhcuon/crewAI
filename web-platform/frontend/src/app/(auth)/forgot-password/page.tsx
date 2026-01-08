@@ -38,15 +38,14 @@ export default function ForgotPasswordPage() {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
             <Mail className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl text-center">Check your email</CardTitle>
+          <CardTitle className="text-2xl text-center">Kiểm tra email của bạn</CardTitle>
           <CardDescription className="text-center">
-            We&apos;ve sent a password reset link to <strong>{email}</strong>
+            Chúng tôi đã gửi liên kết đặt lại mật khẩu đến <strong>{email}</strong>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground text-center">
-            Didn&apos;t receive the email? Check your spam folder or try again with a
-            different email address.
+            Không nhận được email? Kiểm tra thư mục spam hoặc thử lại với địa chỉ email khác.
           </p>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
@@ -55,14 +54,14 @@ export default function ForgotPasswordPage() {
             className="w-full"
             onClick={() => setIsSubmitted(false)}
           >
-            Try another email
+            Thử email khác
           </Button>
           <Link
             href="/login"
             className="text-sm text-primary hover:underline flex items-center justify-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to sign in
+            Quay lại đăng nhập
           </Link>
         </CardFooter>
       </Card>
@@ -72,10 +71,9 @@ export default function ForgotPasswordPage() {
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Forgot password?</CardTitle>
+        <CardTitle className="text-2xl">Quên mật khẩu?</CardTitle>
         <CardDescription>
-          Enter your email address and we&apos;ll send you a link to reset your
-          password
+          Nhập địa chỉ email của bạn và chúng tôi sẽ gửi liên kết để đặt lại mật khẩu
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -90,7 +88,7 @@ export default function ForgotPasswordPage() {
             <Input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder="ten@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -101,14 +99,14 @@ export default function ForgotPasswordPage() {
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Send reset link
+            Gửi liên kết đặt lại
           </Button>
           <Link
             href="/login"
             className="text-sm text-primary hover:underline flex items-center justify-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to sign in
+            Quay lại đăng nhập
           </Link>
         </CardFooter>
       </form>

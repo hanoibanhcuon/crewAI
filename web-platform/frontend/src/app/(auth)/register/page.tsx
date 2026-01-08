@@ -23,10 +23,10 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
 
   const passwordRequirements = [
-    { label: "At least 8 characters", met: password.length >= 8 },
-    { label: "Contains uppercase letter", met: /[A-Z]/.test(password) },
-    { label: "Contains lowercase letter", met: /[a-z]/.test(password) },
-    { label: "Contains number", met: /[0-9]/.test(password) },
+    { label: "Ít nhất 8 ký tự", met: password.length >= 8 },
+    { label: "Chứa chữ in hoa", met: /[A-Z]/.test(password) },
+    { label: "Chứa chữ thường", met: /[a-z]/.test(password) },
+    { label: "Chứa số", met: /[0-9]/.test(password) },
   ];
 
   const isPasswordValid = passwordRequirements.every((req) => req.met);
@@ -37,12 +37,12 @@ export default function RegisterPage() {
     setError("");
 
     if (!isPasswordValid) {
-      setError("Password does not meet requirements");
+      setError("Mật khẩu không đáp ứng yêu cầu");
       return;
     }
 
     if (!doPasswordsMatch) {
-      setError("Passwords do not match");
+      setError("Mật khẩu không khớp");
       return;
     }
 
@@ -55,7 +55,7 @@ export default function RegisterPage() {
       router.push("/dashboard");
     } catch (err: any) {
       setError(
-        err.response?.data?.detail || "Registration failed. Please try again."
+        err.response?.data?.detail || "Đăng ký thất bại. Vui lòng thử lại."
       );
     } finally {
       setIsLoading(false);
@@ -65,9 +65,9 @@ export default function RegisterPage() {
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Create an account</CardTitle>
+        <CardTitle className="text-2xl">Tạo tài khoản</CardTitle>
         <CardDescription>
-          Enter your details to create your account
+          Nhập thông tin của bạn để tạo tài khoản
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -78,11 +78,11 @@ export default function RegisterPage() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
+            <Label htmlFor="fullName">Họ và tên</Label>
             <Input
               id="fullName"
               type="text"
-              placeholder="John Doe"
+              placeholder="Nguyễn Văn A"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               disabled={isLoading}
@@ -93,7 +93,7 @@ export default function RegisterPage() {
             <Input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder="ten@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -101,12 +101,12 @@ export default function RegisterPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Mật khẩu</Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Create a strong password"
+                placeholder="Tạo mật khẩu mạnh"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -147,11 +147,11 @@ export default function RegisterPage() {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder="Xác nhận mật khẩu của bạn"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -165,11 +165,11 @@ export default function RegisterPage() {
               >
                 {doPasswordsMatch ? (
                   <>
-                    <Check className="h-3 w-3" /> Passwords match
+                    <Check className="h-3 w-3" /> Mật khẩu khớp
                   </>
                 ) : (
                   <>
-                    <X className="h-3 w-3" /> Passwords do not match
+                    <X className="h-3 w-3" /> Mật khẩu không khớp
                   </>
                 )}
               </div>
@@ -183,12 +183,12 @@ export default function RegisterPage() {
             disabled={isLoading || !isPasswordValid || !doPasswordsMatch}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create account
+            Tạo tài khoản
           </Button>
           <p className="text-sm text-muted-foreground text-center">
-            Already have an account?{" "}
+            Đã có tài khoản?{" "}
             <Link href="/login" className="text-primary hover:underline">
-              Sign in
+              Đăng nhập
             </Link>
           </p>
         </CardFooter>

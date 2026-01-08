@@ -21,42 +21,42 @@ import Link from "next/link";
 const executions = [
   {
     id: "1",
-    name: "Research & Writing Crew",
+    name: "Đội nghiên cứu & viết bài",
     type: "crew",
     status: "completed",
     started_at: "2025-01-08 10:30:00",
-    duration: "2m 34s",
+    duration: "2 phút 34 giây",
     tokens: 4523,
     cost: 0.12,
   },
   {
     id: "2",
-    name: "Content Pipeline",
+    name: "Quy trình nội dung",
     type: "flow",
     status: "running",
     started_at: "2025-01-08 10:45:00",
-    duration: "Running...",
+    duration: "Đang chạy...",
     tokens: 1234,
     cost: 0.04,
   },
   {
     id: "3",
-    name: "Data Analysis Crew",
+    name: "Đội phân tích dữ liệu",
     type: "crew",
     status: "failed",
     started_at: "2025-01-08 09:15:00",
-    duration: "45s",
+    duration: "45 giây",
     tokens: 892,
     cost: 0.02,
-    error: "API rate limit exceeded",
+    error: "Vượt quá giới hạn API",
   },
   {
     id: "4",
-    name: "Customer Support Crew",
+    name: "Đội hỗ trợ khách hàng",
     type: "crew",
     status: "waiting_human",
     started_at: "2025-01-08 09:00:00",
-    duration: "Waiting...",
+    duration: "Đang chờ...",
     tokens: 2341,
     cost: 0.06,
   },
@@ -67,25 +67,25 @@ const statusConfig = {
     icon: CheckCircle,
     color: "text-green-500",
     bg: "bg-green-100 dark:bg-green-900",
-    label: "Completed",
+    label: "Hoàn thành",
   },
   running: {
     icon: Clock,
     color: "text-blue-500",
     bg: "bg-blue-100 dark:bg-blue-900",
-    label: "Running",
+    label: "Đang chạy",
   },
   failed: {
     icon: XCircle,
     color: "text-red-500",
     bg: "bg-red-100 dark:bg-red-900",
-    label: "Failed",
+    label: "Thất bại",
   },
   waiting_human: {
     icon: AlertCircle,
     color: "text-yellow-500",
     bg: "bg-yellow-100 dark:bg-yellow-900",
-    label: "Waiting for Input",
+    label: "Chờ nhập liệu",
   },
 };
 
@@ -100,13 +100,13 @@ export default function ExecutionsPage() {
   });
 
   return (
-    <DashboardLayout title="Executions">
+    <DashboardLayout title="Thực thi">
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-4">
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search executions..."
+            placeholder="Tìm kiếm thực thi..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -118,7 +118,7 @@ export default function ExecutionsPage() {
             size="sm"
             onClick={() => setStatusFilter(null)}
           >
-            All
+            Tất cả
           </Button>
           {Object.entries(statusConfig).map(([status, config]) => (
             <Button
@@ -141,14 +141,14 @@ export default function ExecutionsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="p-4 text-left text-sm font-medium">Name</th>
-                  <th className="p-4 text-left text-sm font-medium">Type</th>
-                  <th className="p-4 text-left text-sm font-medium">Status</th>
-                  <th className="p-4 text-left text-sm font-medium">Started</th>
-                  <th className="p-4 text-left text-sm font-medium">Duration</th>
-                  <th className="p-4 text-left text-sm font-medium">Tokens</th>
-                  <th className="p-4 text-left text-sm font-medium">Cost</th>
-                  <th className="p-4 text-left text-sm font-medium">Actions</th>
+                  <th className="p-4 text-left text-sm font-medium">Tên</th>
+                  <th className="p-4 text-left text-sm font-medium">Loại</th>
+                  <th className="p-4 text-left text-sm font-medium">Trạng thái</th>
+                  <th className="p-4 text-left text-sm font-medium">Bắt đầu</th>
+                  <th className="p-4 text-left text-sm font-medium">Thời gian</th>
+                  <th className="p-4 text-left text-sm font-medium">Token</th>
+                  <th className="p-4 text-left text-sm font-medium">Chi phí</th>
+                  <th className="p-4 text-left text-sm font-medium">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -163,7 +163,7 @@ export default function ExecutionsPage() {
                         )}
                       </td>
                       <td className="p-4">
-                        <span className="capitalize">{execution.type}</span>
+                        <span className="capitalize">{execution.type === "crew" ? "Đội nhóm" : "Quy trình"}</span>
                       </td>
                       <td className="p-4">
                         <div className={`inline-flex items-center gap-2 rounded-full px-2.5 py-0.5 text-xs font-medium ${status.bg}`}>
@@ -203,9 +203,9 @@ export default function ExecutionsPage() {
       {filteredExecutions.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12">
           <Play className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">No executions found</h3>
+          <h3 className="text-lg font-medium">Không tìm thấy thực thi</h3>
           <p className="text-muted-foreground">
-            Run a crew or flow to see executions here
+            Chạy một đội nhóm hoặc quy trình để xem thực thi ở đây
           </p>
         </div>
       )}

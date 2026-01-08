@@ -68,12 +68,12 @@ export default function TasksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Task deleted successfully");
+      toast.success("Đã xóa nhiệm vụ thành công");
       setDeleteDialogOpen(false);
       setSelectedTask(null);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete task");
+      toast.error(error.response?.data?.detail || "Không thể xóa nhiệm vụ");
     },
   });
 
@@ -85,10 +85,10 @@ export default function TasksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Task duplicated successfully");
+      toast.success("Đã sao chép nhiệm vụ thành công");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to duplicate task");
+      toast.error(error.response?.data?.detail || "Không thể sao chép nhiệm vụ");
     },
   });
 
@@ -115,7 +115,7 @@ export default function TasksPage() {
 
   if (isLoading) {
     return (
-      <DashboardLayout title="Tasks">
+      <DashboardLayout title="Nhiệm vụ">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -125,11 +125,11 @@ export default function TasksPage() {
 
   if (error) {
     return (
-      <DashboardLayout title="Tasks">
+      <DashboardLayout title="Nhiệm vụ">
         <div className="flex flex-col items-center justify-center h-64">
-          <p className="text-destructive mb-4">Failed to load tasks</p>
+          <p className="text-destructive mb-4">Không thể tải danh sách nhiệm vụ</p>
           <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["tasks"] })}>
-            Retry
+            Thử lại
           </Button>
         </div>
       </DashboardLayout>
@@ -138,12 +138,12 @@ export default function TasksPage() {
 
   return (
     <DashboardLayout
-      title="Tasks"
+      title="Nhiệm vụ"
       actions={
         <Button asChild>
           <Link href="/tasks/new">
             <Plus className="mr-2 h-4 w-4" />
-            New Task
+            Nhiệm vụ mới
           </Link>
         </Button>
       }
@@ -153,7 +153,7 @@ export default function TasksPage() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search tasks..."
+            placeholder="Tìm kiếm nhiệm vụ..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -173,7 +173,7 @@ export default function TasksPage() {
                 <div>
                   <CardTitle className="text-lg">{task.name}</CardTitle>
                   <CardDescription>
-                    {task.agent_name ? `Assigned to: ${task.agent_name}` : "Unassigned"}
+                    {task.agent_name ? `Giao cho: ${task.agent_name}` : "Chưa giao"}
                   </CardDescription>
                 </div>
               </div>
@@ -187,19 +187,19 @@ export default function TasksPage() {
                   <DropdownMenuItem asChild>
                     <Link href={`/tasks/${task.id}`}>
                       <Edit className="mr-2 h-4 w-4" />
-                      Edit
+                      Chỉnh sửa
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleDuplicate(task)}>
                     <Copy className="mr-2 h-4 w-4" />
-                    Duplicate
+                    Sao chép
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-destructive"
                     onClick={() => handleDelete(task)}
                   >
                     <Trash className="mr-2 h-4 w-4" />
-                    Delete
+                    Xóa
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -207,12 +207,12 @@ export default function TasksPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
               <p className="text-sm mb-4">
-                <span className="font-medium">Expected:</span> {task.expected_output}
+                <span className="font-medium">Kết quả mong đợi:</span> {task.expected_output}
               </p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {task.human_input && (
                   <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2.5 py-0.5 text-xs font-medium">
-                    Human Input Required
+                    Cần nhập liệu từ người dùng
                   </span>
                 )}
               </div>
@@ -220,7 +220,7 @@ export default function TasksPage() {
                 <Button variant="outline" size="sm" className="flex-1" asChild>
                   <Link href={`/tasks/${task.id}`}>
                     <Edit className="mr-2 h-4 w-4" />
-                    Edit
+                    Chỉnh sửa
                   </Link>
                 </Button>
                 <Button
@@ -247,14 +247,14 @@ export default function TasksPage() {
       {filteredTasks.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12">
           <ListTodo className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">No tasks found</h3>
+          <h3 className="text-lg font-medium">Không tìm thấy nhiệm vụ</h3>
           <p className="text-muted-foreground">
-            Create your first task to get started
+            Tạo nhiệm vụ đầu tiên của bạn để bắt đầu
           </p>
           <Button className="mt-4" asChild>
             <Link href="/tasks/new">
               <Plus className="mr-2 h-4 w-4" />
-              Create Task
+              Tạo nhiệm vụ
             </Link>
           </Button>
         </div>
@@ -264,13 +264,13 @@ export default function TasksPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+            <AlertDialogTitle>Xóa nhiệm vụ</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{selectedTask?.name}&quot;? This action cannot be undone.
+              Bạn có chắc chắn muốn xóa &quot;{selectedTask?.name}&quot;? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -278,7 +278,7 @@ export default function TasksPage() {
               {deleteMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Delete"
+                "Xóa"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

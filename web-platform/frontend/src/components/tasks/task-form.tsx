@@ -178,7 +178,7 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
       router.push("/tasks");
     } catch (err: any) {
       setError(
-        err.response?.data?.detail || "Failed to save task. Please try again."
+        err.response?.data?.detail || "Không thể lưu nhiệm vụ. Vui lòng thử lại."
       );
     } finally {
       setIsLoading(false);
@@ -195,27 +195,27 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
 
       <Tabs defaultValue="basic" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="execution">Execution</TabsTrigger>
-          <TabsTrigger value="output">Output</TabsTrigger>
-          <TabsTrigger value="dependencies">Dependencies</TabsTrigger>
-          <TabsTrigger value="tools">Tools</TabsTrigger>
+          <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
+          <TabsTrigger value="execution">Thực thi</TabsTrigger>
+          <TabsTrigger value="output">Đầu ra</TabsTrigger>
+          <TabsTrigger value="dependencies">Phụ thuộc</TabsTrigger>
+          <TabsTrigger value="tools">Công cụ</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Task Information</CardTitle>
+              <CardTitle>Thông tin nhiệm vụ</CardTitle>
               <CardDescription>
-                Basic information about the task
+                Thông tin cơ bản về nhiệm vụ
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name">Tên *</Label>
                 <Input
                   id="name"
-                  placeholder="Research Topic"
+                  placeholder="Nghiên cứu chủ đề"
                   value={formData.name}
                   onChange={(e) => updateField("name", e.target.value)}
                   required
@@ -223,10 +223,10 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
+                <Label htmlFor="description">Mô tả *</Label>
                 <Textarea
                   id="description"
-                  placeholder="Detailed description of what this task should accomplish..."
+                  placeholder="Mô tả chi tiết về những gì nhiệm vụ này cần hoàn thành..."
                   value={formData.description}
                   onChange={(e) => updateField("description", e.target.value)}
                   rows={4}
@@ -235,10 +235,10 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="expected_output">Expected Output *</Label>
+                <Label htmlFor="expected_output">Kết quả mong đợi *</Label>
                 <Textarea
                   id="expected_output"
-                  placeholder="A comprehensive report containing..."
+                  placeholder="Một báo cáo toàn diện chứa..."
                   value={formData.expected_output}
                   onChange={(e) => updateField("expected_output", e.target.value)}
                   rows={3}
@@ -247,11 +247,11 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Assigned Agent</Label>
+                <Label>Tác nhân được giao</Label>
                 {isLoadingData ? (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading agents...
+                    Đang tải tác nhân...
                   </div>
                 ) : (
                   <Select
@@ -261,10 +261,10 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select an agent" />
+                      <SelectValue placeholder="Chọn tác nhân" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No specific agent</SelectItem>
+                      <SelectItem value="none">Không có tác nhân cụ thể</SelectItem>
                       {availableAgents.map((agent) => (
                         <SelectItem key={agent.id} value={agent.id}>
                           {agent.name} - {agent.role}
@@ -276,10 +276,10 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Tags</Label>
+                <Label>Thẻ</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Add a tag"
+                    placeholder="Thêm thẻ"
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     onKeyDown={(e) => {
@@ -317,17 +317,17 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
         <TabsContent value="execution" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Execution Settings</CardTitle>
+              <CardTitle>Cài đặt thực thi</CardTitle>
               <CardDescription>
-                Configure how this task should be executed
+                Cấu hình cách nhiệm vụ này được thực thi
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Async Execution</Label>
+                  <Label>Thực thi bất đồng bộ</Label>
                   <p className="text-sm text-muted-foreground">
-                    Run this task asynchronously
+                    Chạy nhiệm vụ này bất đồng bộ
                   </p>
                 </div>
                 <Switch
@@ -340,9 +340,9 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Human Input</Label>
+                  <Label>Nhập liệu từ người dùng</Label>
                   <p className="text-sm text-muted-foreground">
-                    Require human input during execution
+                    Yêu cầu nhập liệu từ người dùng trong quá trình thực thi
                   </p>
                 </div>
                 <Switch
@@ -355,9 +355,9 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Markdown Output</Label>
+                  <Label>Đầu ra Markdown</Label>
                   <p className="text-sm text-muted-foreground">
-                    Format output as markdown
+                    Định dạng đầu ra dưới dạng markdown
                   </p>
                 </div>
                 <Switch
@@ -367,7 +367,7 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="callback_url">Callback URL</Label>
+                <Label htmlFor="callback_url">URL Callback</Label>
                 <Input
                   id="callback_url"
                   type="url"
@@ -376,12 +376,12 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
                   onChange={(e) => updateField("callback_url", e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  URL to call when task completes
+                  URL để gọi khi nhiệm vụ hoàn thành
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="guardrail_retries">Guardrail Max Retries</Label>
+                <Label htmlFor="guardrail_retries">Số lần thử lại tối đa Guardrail</Label>
                 <Input
                   id="guardrail_retries"
                   type="number"
@@ -395,9 +395,9 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Public Task</Label>
+                  <Label>Nhiệm vụ công khai</Label>
                   <p className="text-sm text-muted-foreground">
-                    Make this task visible to other users
+                    Cho phép người dùng khác nhìn thấy nhiệm vụ này
                   </p>
                 </div>
                 <Switch
@@ -412,14 +412,14 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
         <TabsContent value="output" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Output Configuration</CardTitle>
+              <CardTitle>Cấu hình đầu ra</CardTitle>
               <CardDescription>
-                Configure how task output should be structured
+                Cấu hình cách cấu trúc đầu ra của nhiệm vụ
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="output_file">Output File Path</Label>
+                <Label htmlFor="output_file">Đường dẫn tệp đầu ra</Label>
                 <Input
                   id="output_file"
                   placeholder="output/report.md"
@@ -427,15 +427,15 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
                   onChange={(e) => updateField("output_file", e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Save output to a file at this path
+                  Lưu đầu ra vào tệp tại đường dẫn này
                 </p>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Create Directory</Label>
+                  <Label>Tạo thư mục</Label>
                   <p className="text-sm text-muted-foreground">
-                    Create output directory if it doesn&apos;t exist
+                    Tạo thư mục đầu ra nếu chưa tồn tại
                   </p>
                 </div>
                 <Switch
@@ -457,7 +457,7 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
                   className="font-mono text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Define a JSON schema for structured output
+                  Định nghĩa JSON schema cho đầu ra có cấu trúc
                 </p>
               </div>
 
@@ -472,7 +472,7 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Full path to a Pydantic model for output validation
+                  Đường dẫn đầy đủ đến Pydantic model để xác thực đầu ra
                 </p>
               </div>
             </CardContent>
@@ -482,9 +482,9 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
         <TabsContent value="dependencies" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Task Dependencies</CardTitle>
+              <CardTitle>Phụ thuộc nhiệm vụ</CardTitle>
               <CardDescription>
-                Select tasks that must complete before this task runs
+                Chọn các nhiệm vụ phải hoàn thành trước khi nhiệm vụ này chạy
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -494,7 +494,7 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
                 </div>
               ) : availableTasks.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No other tasks available for dependencies.</p>
+                  <p>Không có nhiệm vụ khác cho phụ thuộc.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -531,9 +531,9 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
         <TabsContent value="tools" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Tools Override</CardTitle>
+              <CardTitle>Ghi đè công cụ</CardTitle>
               <CardDescription>
-                Select specific tools for this task (overrides agent tools)
+                Chọn công cụ cụ thể cho nhiệm vụ này (ghi đè công cụ của tác nhân)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -543,12 +543,12 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
                 </div>
               ) : availableTools.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No tools available.</p>
+                  <p>Không có công cụ nào.</p>
                   <Button
                     variant="link"
                     onClick={() => router.push("/tools/new")}
                   >
-                    Create your first tool
+                    Tạo công cụ đầu tiên
                   </Button>
                 </div>
               ) : (
@@ -590,11 +590,11 @@ export function TaskForm({ taskId, initialData, onSuccess }: TaskFormProps) {
           variant="outline"
           onClick={() => router.push("/tasks")}
         >
-          Cancel
+          Hủy
         </Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEditing ? "Update Task" : "Create Task"}
+          {isEditing ? "Cập nhật nhiệm vụ" : "Tạo nhiệm vụ"}
         </Button>
       </div>
     </form>

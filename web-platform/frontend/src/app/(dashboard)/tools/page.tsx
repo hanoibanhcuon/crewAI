@@ -54,45 +54,45 @@ interface Tool {
 // Built-in tools for reference
 const builtInToolCategories = [
   {
-    name: "Web & Search",
+    name: "Web & Tìm kiếm",
     icon: Globe,
     tools: [
-      { name: "SerperDevTool", description: "Search the web using Serper.dev API" },
-      { name: "WebsiteSearchTool", description: "Search within a website" },
-      { name: "ScrapeWebsiteTool", description: "Scrape content from websites" },
+      { name: "SerperDevTool", description: "Tìm kiếm web sử dụng API Serper.dev" },
+      { name: "WebsiteSearchTool", description: "Tìm kiếm trong một trang web" },
+      { name: "ScrapeWebsiteTool", description: "Thu thập nội dung từ các trang web" },
     ],
   },
   {
-    name: "File & Document",
+    name: "Tệp & Tài liệu",
     icon: FileText,
     tools: [
-      { name: "FileReadTool", description: "Read content from files" },
-      { name: "PDFSearchTool", description: "Search within PDF documents" },
-      { name: "DOCXSearchTool", description: "Search within DOCX files" },
+      { name: "FileReadTool", description: "Đọc nội dung từ tệp" },
+      { name: "PDFSearchTool", description: "Tìm kiếm trong tài liệu PDF" },
+      { name: "DOCXSearchTool", description: "Tìm kiếm trong tệp DOCX" },
     ],
   },
   {
-    name: "Database",
+    name: "Cơ sở dữ liệu",
     icon: Database,
     tools: [
-      { name: "PGSearchTool", description: "Search PostgreSQL databases" },
-      { name: "MySQLTool", description: "Query MySQL databases" },
+      { name: "PGSearchTool", description: "Tìm kiếm cơ sở dữ liệu PostgreSQL" },
+      { name: "MySQLTool", description: "Truy vấn cơ sở dữ liệu MySQL" },
     ],
   },
   {
     name: "Code & AI",
     icon: Code,
     tools: [
-      { name: "CodeInterpreterTool", description: "Execute Python code" },
-      { name: "RAGTool", description: "Retrieval-augmented generation" },
+      { name: "CodeInterpreterTool", description: "Thực thi code Python" },
+      { name: "RAGTool", description: "Tạo văn bản với tìm kiếm tăng cường" },
     ],
   },
   {
-    name: "Vision",
+    name: "Hình ảnh",
     icon: Image,
     tools: [
-      { name: "VisionTool", description: "Analyze images with AI" },
-      { name: "DALL-E Tool", description: "Generate images with DALL-E" },
+      { name: "VisionTool", description: "Phân tích hình ảnh với AI" },
+      { name: "DALL-E Tool", description: "Tạo hình ảnh với DALL-E" },
     ],
   },
 ];
@@ -119,12 +119,12 @@ export default function ToolsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tools"] });
-      toast.success("Tool deleted successfully");
+      toast.success("Đã xóa công cụ thành công");
       setDeleteDialogOpen(false);
       setSelectedTool(null);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete tool");
+      toast.error(error.response?.data?.detail || "Không thể xóa công cụ");
     },
   });
 
@@ -141,12 +141,12 @@ export default function ToolsPage() {
 
   return (
     <DashboardLayout
-      title="Tools"
+      title="Công cụ"
       actions={
         <Button asChild>
           <Link href="/tools/new">
             <Plus className="mr-2 h-4 w-4" />
-            Create Custom Tool
+            Tạo công cụ tùy chỉnh
           </Link>
         </Button>
       }
@@ -156,7 +156,7 @@ export default function ToolsPage() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search tools..."
+            placeholder="Tìm kiếm công cụ..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -166,8 +166,8 @@ export default function ToolsPage() {
 
       <Tabs defaultValue="custom" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="custom">Custom Tools</TabsTrigger>
-          <TabsTrigger value="builtin">Built-in Tools</TabsTrigger>
+          <TabsTrigger value="custom">Công cụ tùy chỉnh</TabsTrigger>
+          <TabsTrigger value="builtin">Công cụ có sẵn</TabsTrigger>
         </TabsList>
 
         {/* Custom Tools Tab */}
@@ -179,14 +179,14 @@ export default function ToolsPage() {
           ) : customTools.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Wrench className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No custom tools yet</h3>
+              <h3 className="text-lg font-medium">Chưa có công cụ tùy chỉnh</h3>
               <p className="text-muted-foreground">
-                Create your first custom tool to extend agent capabilities
+                Tạo công cụ tùy chỉnh đầu tiên để mở rộng khả năng của tác nhân
               </p>
               <Button className="mt-4" asChild>
                 <Link href="/tools/new">
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Custom Tool
+                  Tạo công cụ tùy chỉnh
                 </Link>
               </Button>
             </div>
@@ -209,7 +209,7 @@ export default function ToolsPage() {
                         <div>
                           <CardTitle className="text-base">{tool.name}</CardTitle>
                           <CardDescription className="text-xs">
-                            {tool.tool_type || "custom"}
+                            {tool.tool_type || "tùy chỉnh"}
                           </CardDescription>
                         </div>
                       </div>
@@ -223,13 +223,13 @@ export default function ToolsPage() {
                           <DropdownMenuItem asChild>
                             <Link href={`/tools/${tool.id}`}>
                               <Edit className="mr-2 h-4 w-4" />
-                              Edit
+                              Chỉnh sửa
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link href={`/tools/${tool.id}/test`}>
                               <TestTube className="mr-2 h-4 w-4" />
-                              Test
+                              Kiểm thử
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -237,7 +237,7 @@ export default function ToolsPage() {
                             onClick={() => handleDelete(tool)}
                           >
                             <Trash className="mr-2 h-4 w-4" />
-                            Delete
+                            Xóa
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -277,7 +277,7 @@ export default function ToolsPage() {
                             </div>
                             <div>
                               <CardTitle className="text-base">{tool.name}</CardTitle>
-                              <CardDescription className="text-xs">Built-in</CardDescription>
+                              <CardDescription className="text-xs">Có sẵn</CardDescription>
                             </div>
                           </div>
                         </CardHeader>
@@ -297,13 +297,13 @@ export default function ToolsPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Tool</AlertDialogTitle>
+            <AlertDialogTitle>Xóa công cụ</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{selectedTool?.name}&quot;? This action cannot be undone.
+              Bạn có chắc chắn muốn xóa &quot;{selectedTool?.name}&quot;? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -311,7 +311,7 @@ export default function ToolsPage() {
               {deleteMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Delete"
+                "Xóa"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

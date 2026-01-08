@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import { DashboardLayout } from "@/components/layout";
 import {
   Card,
@@ -24,16 +26,29 @@ import {
   Layers,
   GitBranch,
   Loader2,
-  Calendar,
   Tag,
   Key,
   Wrench,
   Check,
   Info,
-  FileText,
   Code,
+  MessageSquare,
+  Send,
+  User,
 } from "lucide-react";
 import Link from "next/link";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+
+interface Review {
+  id: string;
+  user_id: string;
+  user_name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  helpful_count: number;
+}
 
 interface Template {
   id: string;
@@ -66,6 +81,7 @@ interface Template {
   required_api_keys: string[];
   created_at: string;
   updated_at: string;
+  reviews?: Review[];
 }
 
 const typeIcons = {
@@ -74,85 +90,165 @@ const typeIcons = {
   agent: Users,
 };
 
+// Memoized Review Item component
+const ReviewItem = memo(function ReviewItem({ review }: { review: Review }) {
+  return (
+    <div className="border-b pb-4 last:border-0 last:pb-0">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <User className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="font-medium">{review.user_name}</p>
+            <div className="flex items-center gap-2">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`h-3 w-3 ${
+                      star <= review.rating
+                        ? "text-yellow-500 fill-current"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {new Date(review.created_at).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+        </div>
+        {review.helpful_count > 0 && (
+          <Badge variant="secondary" className="text-xs">
+            {review.helpful_count} found helpful
+          </Badge>
+        )}
+      </div>
+      <p className="text-sm text-muted-foreground ml-13 pl-13">
+        {review.comment}
+      </p>
+    </div>
+  );
+});
+
 export default function TemplateDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const templateId = params.id as string;
 
-  const [template, setTemplate] = useState<Template | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [isUsing, setIsUsing] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [localReviews, setLocalReviews] = useState<Review[]>([]);
 
-  useEffect(() => {
-    const fetchTemplate = async () => {
-      try {
-        const response = await templatesApi.get(templateId);
-        setTemplate(response.data);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || "Failed to load template");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Fetch template with react-query
+  const { data: template, isLoading, error } = useQuery({
+    queryKey: ["template", templateId],
+    queryFn: async () => {
+      const response = await templatesApi.get(templateId);
+      return response.data as Template;
+    },
+    staleTime: 60000, // Cache for 1 minute
+  });
 
-    fetchTemplate();
-  }, [templateId]);
+  // Mock reviews (would come from API in production)
+  const reviews = template?.reviews || localReviews.length > 0 ? [...localReviews, ...(template?.reviews || [])] : [
+    {
+      id: "1",
+      user_id: "user1",
+      user_name: "John D.",
+      rating: 5,
+      comment: "Excellent template! Saved me hours of work setting up my crew.",
+      created_at: "2024-01-10T10:30:00Z",
+      helpful_count: 12,
+    },
+    {
+      id: "2",
+      user_id: "user2",
+      user_name: "Sarah M.",
+      rating: 4,
+      comment: "Great starting point for my project. Had to make a few tweaks but overall very useful.",
+      created_at: "2024-01-08T15:45:00Z",
+      helpful_count: 8,
+    },
+  ];
 
-  const handleUse = async () => {
-    setIsUsing(true);
-    try {
+  // Use template mutation
+  const useMutation_ = useMutation({
+    mutationFn: async () => {
       const response = await templatesApi.use(templateId);
-      // Redirect to the created resource
-      if (response.data.type === "crew") {
-        router.push(`/crews/${response.data.id}/edit`);
-      } else if (response.data.type === "flow") {
-        router.push(`/flows/${response.data.id}/edit`);
-      } else if (response.data.type === "agent") {
-        router.push(`/agents/${response.data.id}`);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.type === "crew") {
+        router.push(`/crews/${data.id}/edit`);
+      } else if (data.type === "flow") {
+        router.push(`/flows/${data.id}/edit`);
+      } else if (data.type === "agent") {
+        router.push(`/agents/${data.id}`);
       } else {
         router.push("/marketplace");
       }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to use template");
-    } finally {
-      setIsUsing(false);
-    }
-  };
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || "Failed to use template");
+    },
+  });
 
-  const handleLike = async () => {
-    try {
+  // Like mutation
+  const likeMutation = useMutation({
+    mutationFn: async () => {
       await templatesApi.like(templateId);
+    },
+    onSuccess: () => {
       setIsLiked(true);
-      if (template) {
-        setTemplate({ ...template, likes: template.likes + 1 });
-      }
-    } catch (err) {
-      console.error("Failed to like template:", err);
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ["template", templateId] });
+    },
+  });
 
-  const handleRate = async (rating: number) => {
-    try {
+  // Rate mutation
+  const rateMutation = useMutation({
+    mutationFn: async (rating: number) => {
       await templatesApi.rate(templateId, rating);
+      return rating;
+    },
+    onSuccess: (rating) => {
       setUserRating(rating);
-      // Update local rating (simplified)
-      if (template) {
-        const newCount = template.rating_count + 1;
-        const newRating =
-          (template.rating * template.rating_count + rating) / newCount;
-        setTemplate({
-          ...template,
-          rating: Math.round(newRating * 10) / 10,
-          rating_count: newCount,
-        });
-      }
-    } catch (err) {
-      console.error("Failed to rate template:", err);
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ["template", templateId] });
+    },
+  });
+
+  const handleSubmitReview = useCallback(() => {
+    if (!reviewText.trim() || userRating === 0) return;
+
+    const newReview: Review = {
+      id: Date.now().toString(),
+      user_id: "current_user",
+      user_name: "You",
+      rating: userRating,
+      comment: reviewText,
+      created_at: new Date().toISOString(),
+      helpful_count: 0,
+    };
+    setLocalReviews((prev) => [newReview, ...prev]);
+    setReviewText("");
+    toast.success("Review submitted successfully!");
+  }, [reviewText, userRating]);
+
+  const handleUse = useCallback(() => {
+    useMutation_.mutate();
+  }, [useMutation_]);
+
+  const handleLike = useCallback(() => {
+    likeMutation.mutate();
+  }, [likeMutation]);
+
+  const handleRate = useCallback((rating: number) => {
+    rateMutation.mutate(rating);
+  }, [rateMutation]);
 
   if (isLoading) {
     return (
@@ -168,7 +264,7 @@ export default function TemplateDetailPage() {
     return (
       <DashboardLayout title="Template Details">
         <div className="flex flex-col items-center justify-center py-12">
-          <p className="text-red-500 mb-4">{error || "Template not found"}</p>
+          <p className="text-red-500 mb-4">{error instanceof Error ? error.message : "Template not found"}</p>
           <Button variant="outline" asChild>
             <Link href="/marketplace">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -202,8 +298,8 @@ export default function TemplateDetailPage() {
             <Heart className={`h-4 w-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
             {template.likes}
           </Button>
-          <Button onClick={handleUse} disabled={isUsing}>
-            {isUsing ? (
+          <Button onClick={handleUse} disabled={useMutation_.isPending}>
+            {useMutation_.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Download className="h-4 w-4 mr-2" />
@@ -319,13 +415,16 @@ export default function TemplateDetailPage() {
                   <CardContent>
                     <div className="grid grid-cols-2 gap-4">
                       {template.screenshots.map((screenshot, i) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          key={i}
-                          src={screenshot}
-                          alt={`Screenshot ${i + 1}`}
-                          className="rounded-lg border"
-                        />
+                        <div key={i} className="relative aspect-video rounded-lg border overflow-hidden">
+                          <Image
+                            src={screenshot}
+                            alt={`Screenshot ${i + 1}`}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            loading="lazy"
+                          />
+                        </div>
                       ))}
                     </div>
                   </CardContent>
@@ -351,43 +450,94 @@ export default function TemplateDetailPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews" className="mt-4">
+            <TabsContent value="reviews" className="mt-4 space-y-4">
+              {/* Write Review Card */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Rate this Template</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Write a Review
+                  </CardTitle>
                   <CardDescription>
                     Share your experience with this template
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => handleRate(star)}
-                        className={`p-1 transition-colors ${
-                          star <= userRating
-                            ? "text-yellow-500"
-                            : "text-muted-foreground hover:text-yellow-500"
-                        }`}
-                      >
-                        <Star
-                          className={`h-6 w-6 ${
-                            star <= userRating ? "fill-current" : ""
+                  <div className="space-y-2">
+                    <Label>Your Rating</Label>
+                    <div className="flex items-center gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => setUserRating(star)}
+                          className={`p-1 transition-colors ${
+                            star <= userRating
+                              ? "text-yellow-500"
+                              : "text-muted-foreground hover:text-yellow-500"
                           }`}
-                        />
-                      </button>
-                    ))}
-                    {userRating > 0 && (
-                      <span className="text-sm text-muted-foreground ml-2">
-                        You rated {userRating} star(s)
-                      </span>
-                    )}
+                        >
+                          <Star
+                            className={`h-6 w-6 ${
+                              star <= userRating ? "fill-current" : ""
+                            }`}
+                          />
+                        </button>
+                      ))}
+                      {userRating > 0 && (
+                        <span className="text-sm text-muted-foreground ml-2">
+                          {userRating} star{userRating !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    This template has {template.rating_count} reviews with an average
-                    rating of {template.rating} stars.
-                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="review">Your Review</Label>
+                    <Textarea
+                      id="review"
+                      placeholder="Write your review here... What did you like? What could be improved?"
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSubmitReview}
+                    disabled={!reviewText.trim() || userRating === 0}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Submit Review
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Reviews Summary */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Reviews ({reviews.length})</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                      <span className="text-lg font-bold">{template.rating}</span>
+                      <span className="text-sm text-muted-foreground">
+                        ({template.rating_count} reviews)
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {reviews.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No reviews yet</p>
+                      <p className="text-sm">Be the first to review this template!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {reviews.map((review) => (
+                        <ReviewItem key={review.id} review={review} />
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

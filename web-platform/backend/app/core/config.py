@@ -53,9 +53,16 @@ class Settings(BaseSettings):
     S3_BUCKET: Optional[str] = None
     S3_REGION: Optional[str] = None
 
+    # Logging
+    LOG_LEVEL: str = "INFO"
+
+    # Encryption
+    ENCRYPTION_SALT: Optional[str] = None
+
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra fields from .env
 
 
 settings = Settings()

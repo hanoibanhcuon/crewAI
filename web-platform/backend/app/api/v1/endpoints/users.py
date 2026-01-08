@@ -60,6 +60,13 @@ async def change_password(
     return {"message": "Password updated successfully"}
 
 
+def mask_api_key(key: str) -> str:
+    """Mask API key for display, showing first 4 and last 6 chars."""
+    if not key or len(key) < 12:
+        return "***"
+    return f"{key[:4]}...{key[-6:]}"
+
+
 @router.get("/me/api-keys", response_model=List[APIKeyResponse])
 async def get_api_keys(
     current_user = Depends(get_current_active_user)
@@ -72,6 +79,7 @@ async def get_api_keys(
         APIKeyResponse(
             provider=provider,
             is_set=bool(key),
+            masked_key=mask_api_key(key) if key else None,
             last_updated=None
         )
         for provider, key in api_keys.items()

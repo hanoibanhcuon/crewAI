@@ -51,7 +51,10 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  FolderUp,
+  X,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface KnowledgeSource {
   id: string;
@@ -164,6 +167,18 @@ export default function KnowledgePage() {
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // Bulk upload state
+  const [showBulkUploadDialog, setShowBulkUploadDialog] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
+  const [bulkUploadProgress, setBulkUploadProgress] = useState<Record<string, { status: "pending" | "uploading" | "done" | "error"; progress: number; error?: string }>>({});
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
+  const [bulkSettings, setBulkSettings] = useState({
+    chunk_size: 1000,
+    chunk_overlap: 200,
+    embedding_model: "text-embedding-3-small",
+  });
+  const bulkFileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     loadSources();
   }, []);
@@ -254,6 +269,115 @@ export default function KnowledgePage() {
     }
   };
 
+  // Bulk upload handlers
+  const handleBulkFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setBulkFiles((prev) => [...prev, ...files]);
+      // Initialize progress for new files
+      const newProgress: Record<string, { status: "pending" | "uploading" | "done" | "error"; progress: number }> = {};
+      files.forEach((file) => {
+        newProgress[file.name] = { status: "pending", progress: 0 };
+      });
+      setBulkUploadProgress((prev) => ({ ...prev, ...newProgress }));
+    }
+  };
+
+  const handleBulkFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files).filter((file) =>
+      /\.(pdf|txt|md|csv|json|doc|docx)$/i.test(file.name)
+    );
+    if (files.length > 0) {
+      setBulkFiles((prev) => [...prev, ...files]);
+      const newProgress: Record<string, { status: "pending" | "uploading" | "done" | "error"; progress: number }> = {};
+      files.forEach((file) => {
+        newProgress[file.name] = { status: "pending", progress: 0 };
+      });
+      setBulkUploadProgress((prev) => ({ ...prev, ...newProgress }));
+    }
+  };
+
+  const removeBulkFile = (fileName: string) => {
+    setBulkFiles((prev) => prev.filter((f) => f.name !== fileName));
+    setBulkUploadProgress((prev) => {
+      const newProgress = { ...prev };
+      delete newProgress[fileName];
+      return newProgress;
+    });
+  };
+
+  const handleBulkUpload = async () => {
+    if (bulkFiles.length === 0) return;
+
+    setIsBulkUploading(true);
+
+    for (const file of bulkFiles) {
+      // Update status to uploading
+      setBulkUploadProgress((prev) => ({
+        ...prev,
+        [file.name]: { status: "uploading", progress: 0 },
+      }));
+
+      try {
+        const formData = new FormData();
+        formData.append("name", file.name.replace(/\.[^/.]+$/, ""));
+        formData.append("source_type", "file");
+        formData.append("chunk_size", bulkSettings.chunk_size.toString());
+        formData.append("chunk_overlap", bulkSettings.chunk_overlap.toString());
+        formData.append("embedding_model", bulkSettings.embedding_model);
+        formData.append("file", file);
+
+        // Simulate progress (since FormData doesn't provide progress)
+        const progressInterval = setInterval(() => {
+          setBulkUploadProgress((prev) => {
+            const current = prev[file.name]?.progress || 0;
+            if (current < 90) {
+              return {
+                ...prev,
+                [file.name]: { ...prev[file.name], progress: current + 10 },
+              };
+            }
+            return prev;
+          });
+        }, 200);
+
+        await knowledgeApi.create(formData);
+
+        clearInterval(progressInterval);
+
+        // Update status to done
+        setBulkUploadProgress((prev) => ({
+          ...prev,
+          [file.name]: { status: "done", progress: 100 },
+        }));
+      } catch (err: any) {
+        // Update status to error
+        setBulkUploadProgress((prev) => ({
+          ...prev,
+          [file.name]: {
+            status: "error",
+            progress: 0,
+            error: err.response?.data?.detail || "Upload failed",
+          },
+        }));
+      }
+    }
+
+    setIsBulkUploading(false);
+    loadSources();
+  };
+
+  const resetBulkUpload = () => {
+    setBulkFiles([]);
+    setBulkUploadProgress({});
+    setShowBulkUploadDialog(false);
+  };
+
+  const bulkUploadComplete = Object.values(bulkUploadProgress).every(
+    (p) => p.status === "done" || p.status === "error"
+  );
+
   const filteredSources = sources.filter(
     (source) =>
       source.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -264,10 +388,16 @@ export default function KnowledgePage() {
     <DashboardLayout
       title="Knowledge Sources"
       actions={
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Source
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowBulkUploadDialog(true)}>
+            <FolderUp className="mr-2 h-4 w-4" />
+            Bulk Upload
+          </Button>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Source
+          </Button>
+        </div>
       }
     >
       {/* Search */}
@@ -750,6 +880,226 @@ export default function KnowledgePage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Upload Dialog */}
+      <Dialog open={showBulkUploadDialog} onOpenChange={(open) => {
+        if (!open && !isBulkUploading) {
+          resetBulkUpload();
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FolderUp className="h-5 w-5" />
+              Bulk Upload Files
+            </DialogTitle>
+            <DialogDescription>
+              Upload multiple files at once to create knowledge sources.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Drop Zone */}
+            {!isBulkUploading && bulkFiles.length === 0 && (
+              <div
+                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+                onClick={() => bulkFileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleBulkFileDrop}
+              >
+                <input
+                  ref={bulkFileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.txt,.md,.csv,.json,.doc,.docx"
+                  multiple
+                  onChange={handleBulkFileSelect}
+                />
+                <FolderUp className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                <p className="font-medium">Drop files here or click to select</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  PDF, TXT, MD, CSV, JSON, DOC, DOCX (multiple files supported)
+                </p>
+              </div>
+            )}
+
+            {/* File List */}
+            {bulkFiles.length > 0 && (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {bulkFiles.map((file) => {
+                  const progress = bulkUploadProgress[file.name];
+                  const FileIcon =
+                    file.type && fileTypeIcons[file.type]
+                      ? fileTypeIcons[file.type]
+                      : File;
+
+                  return (
+                    <div
+                      key={file.name}
+                      className="flex items-center gap-3 p-3 border rounded-lg"
+                    >
+                      <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatFileSize(file.size)}
+                        </p>
+                        {progress && progress.status !== "pending" && (
+                          <div className="mt-2">
+                            {progress.status === "uploading" && (
+                              <Progress value={progress.progress} className="h-1" />
+                            )}
+                            {progress.status === "error" && (
+                              <p className="text-xs text-red-500">{progress.error}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {progress?.status === "done" && (
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                        )}
+                        {progress?.status === "error" && (
+                          <AlertCircle className="h-5 w-5 text-red-500" />
+                        )}
+                        {progress?.status === "uploading" && (
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        )}
+                        {!isBulkUploading && progress?.status !== "done" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => removeBulkFile(file.name)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Add More Files Button */}
+            {bulkFiles.length > 0 && !isBulkUploading && !bulkUploadComplete && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => bulkFileInputRef.current?.click()}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add More Files
+              </Button>
+            )}
+
+            {/* Settings */}
+            {bulkFiles.length > 0 && !isBulkUploading && !bulkUploadComplete && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Upload Settings (applies to all files)
+                </h4>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="bulk_chunk_size">Chunk Size</Label>
+                    <Input
+                      id="bulk_chunk_size"
+                      type="number"
+                      min={100}
+                      max={4000}
+                      value={bulkSettings.chunk_size}
+                      onChange={(e) =>
+                        setBulkSettings({
+                          ...bulkSettings,
+                          chunk_size: parseInt(e.target.value) || 1000,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bulk_chunk_overlap">Overlap</Label>
+                    <Input
+                      id="bulk_chunk_overlap"
+                      type="number"
+                      min={0}
+                      max={500}
+                      value={bulkSettings.chunk_overlap}
+                      onChange={(e) =>
+                        setBulkSettings({
+                          ...bulkSettings,
+                          chunk_overlap: parseInt(e.target.value) || 200,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bulk_embedding">Embedding</Label>
+                    <Select
+                      value={bulkSettings.embedding_model}
+                      onValueChange={(v) =>
+                        setBulkSettings({ ...bulkSettings, embedding_model: v })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="text-embedding-3-small">
+                          embedding-3-small
+                        </SelectItem>
+                        <SelectItem value="text-embedding-3-large">
+                          embedding-3-large
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Summary */}
+            {bulkUploadComplete && (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm font-medium">
+                  Upload complete!{" "}
+                  {Object.values(bulkUploadProgress).filter((p) => p.status === "done").length} of{" "}
+                  {bulkFiles.length} files uploaded successfully.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={resetBulkUpload}
+              disabled={isBulkUploading}
+            >
+              {bulkUploadComplete ? "Close" : "Cancel"}
+            </Button>
+            {!bulkUploadComplete && (
+              <Button
+                onClick={handleBulkUpload}
+                disabled={isBulkUploading || bulkFiles.length === 0}
+              >
+                {isBulkUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload {bulkFiles.length} {bulkFiles.length === 1 ? "File" : "Files"}
+                  </>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

@@ -32,7 +32,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: any) {
       setError(
-        err.response?.data?.detail || "Invalid email or password. Please try again."
+        err.response?.data?.detail || "Email hoặc mật khẩu không đúng. Vui lòng thử lại."
       );
     } finally {
       setIsLoading(false);
@@ -42,9 +42,9 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Sign in</CardTitle>
+        <CardTitle className="text-2xl">Đăng nhập</CardTitle>
         <CardDescription>
-          Enter your email and password to access your account
+          Nhập email và mật khẩu để truy cập tài khoản của bạn
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -59,7 +59,7 @@ export default function LoginPage() {
             <Input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder="ten@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -68,19 +68,19 @@ export default function LoginPage() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật khẩu</Label>
               <Link
                 href="/forgot-password"
                 className="text-sm text-primary hover:underline"
               >
-                Forgot password?
+                Quên mật khẩu?
               </Link>
             </div>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder="Nhập mật khẩu của bạn"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -105,12 +105,12 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign in
+            Đăng nhập
           </Button>
           <p className="text-sm text-muted-foreground text-center">
-            Don&apos;t have an account?{" "}
+            Chưa có tài khoản?{" "}
             <Link href="/register" className="text-primary hover:underline">
-              Sign up
+              Đăng ký
             </Link>
           </p>
         </CardFooter>

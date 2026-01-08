@@ -74,9 +74,9 @@ const LLM_MODELS: Record<string, { value: string; label: string }[]> = {
 };
 
 const MEMORY_TYPES = [
-  { value: "short_term", label: "Short Term" },
-  { value: "long_term", label: "Long Term" },
-  { value: "entity", label: "Entity Memory" },
+  { value: "short_term", label: "Ngắn hạn" },
+  { value: "long_term", label: "Dài hạn" },
+  { value: "entity", label: "Bộ nhớ thực thể" },
 ];
 
 interface AgentFormData {
@@ -215,7 +215,7 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
       router.push("/agents");
     } catch (err: any) {
       setError(
-        err.response?.data?.detail || "Failed to save agent. Please try again."
+        err.response?.data?.detail || "Không thể lưu tác nhân. Vui lòng thử lại."
       );
     } finally {
       setIsLoading(false);
@@ -232,38 +232,38 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
 
       <Tabs defaultValue="basic" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="llm">LLM Settings</TabsTrigger>
-          <TabsTrigger value="behavior">Behavior</TabsTrigger>
-          <TabsTrigger value="tools">Tools</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
+          <TabsTrigger value="llm">Cài đặt LLM</TabsTrigger>
+          <TabsTrigger value="behavior">Hành vi</TabsTrigger>
+          <TabsTrigger value="tools">Công cụ</TabsTrigger>
+          <TabsTrigger value="advanced">Nâng cao</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Agent Information</CardTitle>
+              <CardTitle>Thông tin tác nhân</CardTitle>
               <CardDescription>
-                Basic information about your AI agent
+                Thông tin cơ bản về tác nhân AI của bạn
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="name">Tên *</Label>
                   <Input
                     id="name"
-                    placeholder="Research Analyst"
+                    placeholder="Chuyên viên nghiên cứu"
                     value={formData.name}
                     onChange={(e) => updateField("name", e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role *</Label>
+                  <Label htmlFor="role">Vai trò *</Label>
                   <Input
                     id="role"
-                    placeholder="Senior Research Analyst"
+                    placeholder="Chuyên viên phân tích cao cấp"
                     value={formData.role}
                     onChange={(e) => updateField("role", e.target.value)}
                     required
@@ -272,10 +272,10 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="goal">Goal *</Label>
+                <Label htmlFor="goal">Mục tiêu *</Label>
                 <Textarea
                   id="goal"
-                  placeholder="Find and analyze data from various sources to provide comprehensive research reports"
+                  placeholder="Tìm kiếm và phân tích dữ liệu từ nhiều nguồn để cung cấp báo cáo nghiên cứu toàn diện"
                   value={formData.goal}
                   onChange={(e) => updateField("goal", e.target.value)}
                   required
@@ -283,10 +283,10 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="backstory">Backstory</Label>
+                <Label htmlFor="backstory">Câu chuyện nền</Label>
                 <Textarea
                   id="backstory"
-                  placeholder="You are a seasoned research analyst with decades of experience..."
+                  placeholder="Bạn là một chuyên gia phân tích kỳ cựu với hàng chục năm kinh nghiệm..."
                   value={formData.backstory}
                   onChange={(e) => updateField("backstory", e.target.value)}
                   rows={4}
@@ -294,20 +294,20 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Mô tả</Label>
                 <Textarea
                   id="description"
-                  placeholder="A brief description of what this agent does"
+                  placeholder="Mô tả ngắn gọn về chức năng của tác nhân này"
                   value={formData.description}
                   onChange={(e) => updateField("description", e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Tags</Label>
+                <Label>Thẻ</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Add a tag"
+                    placeholder="Thêm thẻ"
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     onKeyDown={(e) => {
@@ -345,15 +345,15 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
         <TabsContent value="llm" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>LLM Configuration</CardTitle>
+              <CardTitle>Cấu hình LLM</CardTitle>
               <CardDescription>
-                Configure the language model for this agent
+                Cấu hình mô hình ngôn ngữ cho tác nhân này
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Provider</Label>
+                  <Label>Nhà cung cấp</Label>
                   <Select
                     value={formData.llm_provider}
                     onValueChange={handleProviderChange}
@@ -371,7 +371,7 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Model</Label>
+                  <Label>Mô hình</Label>
                   <Select
                     value={formData.llm_model}
                     onValueChange={(value) => updateField("llm_model", value)}
@@ -392,7 +392,7 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>Temperature: {formData.temperature}</Label>
+                  <Label>Nhiệt độ: {formData.temperature}</Label>
                 </div>
                 <Slider
                   value={[formData.temperature]}
@@ -402,16 +402,16 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
                   step={0.1}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Lower values make output more focused, higher values make it more creative
+                  Giá trị thấp hơn cho kết quả tập trung hơn, giá trị cao hơn cho kết quả sáng tạo hơn
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="maxTokens">Max Tokens (optional)</Label>
+                <Label htmlFor="maxTokens">Token tối đa (tùy chọn)</Label>
                 <Input
                   id="maxTokens"
                   type="number"
-                  placeholder="Leave empty for default"
+                  placeholder="Để trống để sử dụng mặc định"
                   value={formData.max_tokens || ""}
                   onChange={(e) =>
                     updateField(
@@ -428,17 +428,17 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
         <TabsContent value="behavior" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Behavior Settings</CardTitle>
+              <CardTitle>Cài đặt hành vi</CardTitle>
               <CardDescription>
-                Configure how the agent behaves during execution
+                Cấu hình cách tác nhân hoạt động trong quá trình thực thi
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Verbose Mode</Label>
+                  <Label>Chế độ chi tiết</Label>
                   <p className="text-sm text-muted-foreground">
-                    Enable detailed logging of agent actions
+                    Bật ghi log chi tiết các hành động của tác nhân
                   </p>
                 </div>
                 <Switch
@@ -449,9 +449,9 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Allow Delegation</Label>
+                  <Label>Cho phép ủy quyền</Label>
                   <p className="text-sm text-muted-foreground">
-                    Allow this agent to delegate tasks to other agents
+                    Cho phép tác nhân này ủy quyền nhiệm vụ cho các tác nhân khác
                   </p>
                 </div>
                 <Switch
@@ -464,9 +464,9 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Memory</Label>
+                  <Label>Bộ nhớ</Label>
                   <p className="text-sm text-muted-foreground">
-                    Enable memory for context retention
+                    Bật bộ nhớ để duy trì ngữ cảnh
                   </p>
                 </div>
                 <Switch
@@ -479,7 +479,7 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
 
               {formData.memory_enabled && (
                 <div className="space-y-2">
-                  <Label>Memory Type</Label>
+                  <Label>Loại bộ nhớ</Label>
                   <Select
                     value={formData.memory_type}
                     onValueChange={(value) => updateField("memory_type", value)}
@@ -500,7 +500,7 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="maxIter">Max Iterations</Label>
+                  <Label htmlFor="maxIter">Số lần lặp tối đa</Label>
                   <Input
                     id="maxIter"
                     type="number"
@@ -511,11 +511,11 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="maxRpm">Max RPM (optional)</Label>
+                  <Label htmlFor="maxRpm">RPM tối đa (tùy chọn)</Label>
                   <Input
                     id="maxRpm"
                     type="number"
-                    placeholder="No limit"
+                    placeholder="Không giới hạn"
                     value={formData.max_rpm || ""}
                     onChange={(e) =>
                       updateField(
@@ -526,7 +526,7 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="maxRetry">Max Retry Limit</Label>
+                  <Label htmlFor="maxRetry">Số lần thử lại tối đa</Label>
                   <Input
                     id="maxRetry"
                     type="number"
@@ -544,9 +544,9 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
         <TabsContent value="tools" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Tools</CardTitle>
+              <CardTitle>Công cụ</CardTitle>
               <CardDescription>
-                Select the tools this agent can use
+                Chọn các công cụ mà tác nhân này có thể sử dụng
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -556,12 +556,12 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
                 </div>
               ) : availableTools.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No tools available.</p>
+                  <p>Không có công cụ nào.</p>
                   <Button
                     variant="link"
                     onClick={() => router.push("/tools/new")}
                   >
-                    Create your first tool
+                    Tạo công cụ đầu tiên
                   </Button>
                 </div>
               ) : (
@@ -599,17 +599,17 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
         <TabsContent value="advanced" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Advanced Settings</CardTitle>
+              <CardTitle>Cài đặt nâng cao</CardTitle>
               <CardDescription>
-                Configure advanced agent settings
+                Cấu hình các cài đặt tác nhân nâng cao
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Code Execution</Label>
+                  <Label>Thực thi code</Label>
                   <p className="text-sm text-muted-foreground">
-                    Allow agent to execute code
+                    Cho phép tác nhân thực thi code
                   </p>
                 </div>
                 <Switch
@@ -622,7 +622,7 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
 
               {formData.allow_code_execution && (
                 <div className="space-y-2">
-                  <Label>Execution Mode</Label>
+                  <Label>Chế độ thực thi</Label>
                   <Select
                     value={formData.code_execution_mode}
                     onValueChange={(value) =>
@@ -633,18 +633,18 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="safe">Safe (Sandboxed)</SelectItem>
-                      <SelectItem value="unsafe">Unsafe (Direct)</SelectItem>
+                      <SelectItem value="safe">An toàn (Sandbox)</SelectItem>
+                      <SelectItem value="unsafe">Không an toàn (Trực tiếp)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="systemPrompt">Custom System Prompt</Label>
+                <Label htmlFor="systemPrompt">Prompt hệ thống tùy chỉnh</Label>
                 <Textarea
                   id="systemPrompt"
-                  placeholder="Override the default system prompt for this agent..."
+                  placeholder="Ghi đè prompt hệ thống mặc định cho tác nhân này..."
                   value={formData.system_prompt}
                   onChange={(e) => updateField("system_prompt", e.target.value)}
                   rows={6}
@@ -653,9 +653,9 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Public Agent</Label>
+                  <Label>Tác nhân công khai</Label>
                   <p className="text-sm text-muted-foreground">
-                    Make this agent visible to other users
+                    Cho phép người dùng khác nhìn thấy tác nhân này
                   </p>
                 </div>
                 <Switch
@@ -674,11 +674,11 @@ export function AgentForm({ agentId, initialData, onSuccess }: AgentFormProps) {
           variant="outline"
           onClick={() => router.push("/agents")}
         >
-          Cancel
+          Hủy
         </Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEditing ? "Update Agent" : "Create Agent"}
+          {isEditing ? "Cập nhật tác nhân" : "Tạo tác nhân"}
         </Button>
       </div>
     </form>

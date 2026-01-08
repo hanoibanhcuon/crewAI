@@ -71,12 +71,12 @@ export default function FlowsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flows"] });
-      toast.success("Flow deleted successfully");
+      toast.success("Đã xóa quy trình thành công");
       setDeleteDialogOpen(false);
       setSelectedFlow(null);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete flow");
+      toast.error(error.response?.data?.detail || "Không thể xóa quy trình");
     },
   });
 
@@ -88,10 +88,10 @@ export default function FlowsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flows"] });
-      toast.success("Flow duplicated successfully");
+      toast.success("Đã sao chép quy trình thành công");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to duplicate flow");
+      toast.error(error.response?.data?.detail || "Không thể sao chép quy trình");
     },
   });
 
@@ -122,7 +122,7 @@ export default function FlowsPage() {
 
   if (isLoading) {
     return (
-      <DashboardLayout title="Flows">
+      <DashboardLayout title="Quy trình">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -132,11 +132,11 @@ export default function FlowsPage() {
 
   if (error) {
     return (
-      <DashboardLayout title="Flows">
+      <DashboardLayout title="Quy trình">
         <div className="flex flex-col items-center justify-center h-64">
-          <p className="text-destructive mb-4">Failed to load flows</p>
+          <p className="text-destructive mb-4">Không thể tải danh sách quy trình</p>
           <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["flows"] })}>
-            Retry
+            Thử lại
           </Button>
         </div>
       </DashboardLayout>
@@ -145,12 +145,12 @@ export default function FlowsPage() {
 
   return (
     <DashboardLayout
-      title="Flows"
+      title="Quy trình"
       actions={
         <Button asChild>
           <Link href="/flows/new">
             <Plus className="mr-2 h-4 w-4" />
-            New Flow
+            Quy trình mới
           </Link>
         </Button>
       }
@@ -160,7 +160,7 @@ export default function FlowsPage() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search flows..."
+            placeholder="Tìm kiếm quy trình..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -179,7 +179,7 @@ export default function FlowsPage() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">{flow.name}</CardTitle>
-                  <CardDescription>{flow.steps_count || 0} steps</CardDescription>
+                  <CardDescription>{flow.steps_count || 0} bước</CardDescription>
                 </div>
               </div>
               <DropdownMenu>
@@ -191,17 +191,17 @@ export default function FlowsPage() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => handleRun(flow)}>
                     <Play className="mr-2 h-4 w-4" />
-                    Run
+                    Chạy
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href={`/flows/${flow.id}/edit`}>
                       <Edit className="mr-2 h-4 w-4" />
-                      Edit
+                      Chỉnh sửa
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleDuplicate(flow)}>
                     <Copy className="mr-2 h-4 w-4" />
-                    Duplicate
+                    Sao chép
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -209,7 +209,7 @@ export default function FlowsPage() {
                     onClick={() => handleDelete(flow)}
                   >
                     <Trash className="mr-2 h-4 w-4" />
-                    Delete
+                    Xóa
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -226,7 +226,7 @@ export default function FlowsPage() {
               <div className="flex gap-2">
                 <Button size="sm" className="flex-1" onClick={() => handleRun(flow)}>
                   <Play className="mr-2 h-4 w-4" />
-                  Run
+                  Chạy
                 </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/flows/${flow.id}/edit`}>
@@ -250,14 +250,14 @@ export default function FlowsPage() {
       {filteredFlows.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12">
           <GitBranch className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">No flows found</h3>
+          <h3 className="text-lg font-medium">Không tìm thấy quy trình</h3>
           <p className="text-muted-foreground">
-            Create your first flow to get started
+            Tạo quy trình đầu tiên của bạn để bắt đầu
           </p>
           <Button className="mt-4" asChild>
             <Link href="/flows/new">
               <Plus className="mr-2 h-4 w-4" />
-              Create Flow
+              Tạo quy trình
             </Link>
           </Button>
         </div>
@@ -267,13 +267,13 @@ export default function FlowsPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Flow</AlertDialogTitle>
+            <AlertDialogTitle>Xóa quy trình</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{selectedFlow?.name}&quot;? This action cannot be undone.
+              Bạn có chắc chắn muốn xóa &quot;{selectedFlow?.name}&quot;? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -281,7 +281,7 @@ export default function FlowsPage() {
               {deleteMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Delete"
+                "Xóa"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

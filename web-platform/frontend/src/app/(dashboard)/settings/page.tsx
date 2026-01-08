@@ -31,6 +31,7 @@ import { toast } from "sonner";
 interface ApiKeyStatus {
   provider: string;
   is_set: boolean;
+  masked_key?: string;
   last_updated?: string;
 }
 
@@ -44,9 +45,9 @@ const getPasswordStrength = (password: string) => {
   if (/[0-9]/.test(password)) strength++;
   if (/[^A-Za-z0-9]/.test(password)) strength++;
 
-  if (strength <= 2) return { strength, label: "Weak", color: "bg-red-500" };
-  if (strength <= 3) return { strength, label: "Medium", color: "bg-yellow-500" };
-  return { strength, label: "Strong", color: "bg-green-500" };
+  if (strength <= 2) return { strength, label: "Yếu", color: "bg-red-500" };
+  if (strength <= 3) return { strength, label: "Trung bình", color: "bg-yellow-500" };
+  return { strength, label: "Mạnh", color: "bg-green-500" };
 };
 
 export default function SettingsPage() {
@@ -102,6 +103,12 @@ export default function SettingsPage() {
     return status?.is_set || false;
   };
 
+  // Helper to get masked key for display
+  const getMaskedKey = (provider: string) => {
+    const status = apiKeysStatus.find((k: ApiKeyStatus) => k.provider === provider);
+    return status?.masked_key || "";
+  };
+
   // Update profile form when data loads
   useEffect(() => {
     if (profile) {
@@ -118,10 +125,10 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Profile updated successfully!");
+      toast.success("Cập nhật hồ sơ thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to update profile");
+      toast.error(error.response?.data?.detail || "Không thể cập nhật hồ sơ");
     },
   });
 
@@ -147,7 +154,7 @@ export default function SettingsPage() {
       return { previousApiKeys };
     },
     onSuccess: (_data, variables) => {
-      toast.success(`${variables.provider.charAt(0).toUpperCase() + variables.provider.slice(1)} API key saved!`);
+      toast.success(`Đã lưu khóa API ${variables.provider.charAt(0).toUpperCase() + variables.provider.slice(1)}!`);
       // Clear the specific input after success
       if (variables.provider === "openai") setOpenaiKey("");
       if (variables.provider === "anthropic") setAnthropicKey("");
@@ -159,7 +166,7 @@ export default function SettingsPage() {
       if (context?.previousApiKeys) {
         queryClient.setQueryData(["apiKeys"], context.previousApiKeys);
       }
-      toast.error(error.response?.data?.detail || "Failed to save API key");
+      toast.error(error.response?.data?.detail || "Không thể lưu khóa API");
       setSavingKey(null);
     },
     onSettled: () => {
@@ -176,10 +183,10 @@ export default function SettingsPage() {
     },
     onSuccess: (_data, provider) => {
       queryClient.invalidateQueries({ queryKey: ["apiKeys"] });
-      toast.success(`${provider.charAt(0).toUpperCase() + provider.slice(1)} API key deleted!`);
+      toast.success(`Đã xóa khóa API ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete API key");
+      toast.error(error.response?.data?.detail || "Không thể xóa khóa API");
     },
   });
 
@@ -190,13 +197,13 @@ export default function SettingsPage() {
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Password changed successfully!");
+      toast.success("Đổi mật khẩu thành công!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to change password");
+      toast.error(error.response?.data?.detail || "Không thể đổi mật khẩu");
     },
   });
 
@@ -206,7 +213,7 @@ export default function SettingsPage() {
 
   const handleSaveApiKey = (provider: string, key: string) => {
     if (!key.trim()) {
-      toast.error("Please enter an API key");
+      toast.error("Vui lòng nhập khóa API");
       return;
     }
     setSavingKey(provider);
@@ -219,11 +226,11 @@ export default function SettingsPage() {
 
   const handleChangePassword = () => {
     if (newPassword !== confirmPassword) {
-      toast.error("New passwords do not match");
+      toast.error("Mật khẩu mới không khớp");
       return;
     }
     if (newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      toast.error("Mật khẩu phải có ít nhất 8 ký tự");
       return;
     }
     changePasswordMutation.mutate({
@@ -238,7 +245,7 @@ export default function SettingsPage() {
 
   if (profileLoading) {
     return (
-      <DashboardLayout title="Settings">
+      <DashboardLayout title="Cài đặt">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -247,22 +254,22 @@ export default function SettingsPage() {
   }
 
   return (
-    <DashboardLayout title="Settings">
+    <DashboardLayout title="Cài đặt">
       <div className="grid gap-6 md:grid-cols-2">
         {/* Profile Settings */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Profile
+              Hồ sơ
             </CardTitle>
-            <CardDescription>Manage your account settings</CardDescription>
+            <CardDescription>Quản lý cài đặt tài khoản của bạn</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Full Name</label>
+              <label className="text-sm font-medium">Họ và tên</label>
               <Input
-                placeholder="John Doe"
+                placeholder="Nguyễn Văn A"
                 className="mt-1"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -272,7 +279,7 @@ export default function SettingsPage() {
               <label className="text-sm font-medium">Email</label>
               <Input
                 type="email"
-                placeholder="john@example.com"
+                placeholder="ten@example.com"
                 className="mt-1"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -285,12 +292,12 @@ export default function SettingsPage() {
               {updateProfileMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Đang lưu...
                 </>
               ) : (
                 <>
                   <Check className="mr-2 h-4 w-4" />
-                  Save Changes
+                  Lưu thay đổi
                 </>
               )}
             </Button>
@@ -302,9 +309,9 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Key className="h-5 w-5" />
-              API Keys
+              Khóa API
             </CardTitle>
-            <CardDescription>Configure your LLM provider API keys</CardDescription>
+            <CardDescription>Cấu hình khóa API của nhà cung cấp LLM</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {apiKeysLoading ? (
@@ -316,11 +323,11 @@ export default function SettingsPage() {
                 {/* OpenAI Key */}
                 <div>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">OpenAI API Key</label>
+                    <label className="text-sm font-medium">Khóa API OpenAI</label>
                     {isKeyConfigured("openai") && (
                       <span className="flex items-center text-xs text-green-600 dark:text-green-400">
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Configured
+                        Đã cấu hình
                       </span>
                     )}
                   </div>
@@ -328,7 +335,7 @@ export default function SettingsPage() {
                     <div className="relative flex-1">
                       <Input
                         type={showOpenai ? "text" : "password"}
-                        placeholder={isKeyConfigured("openai") ? "Enter new key to replace" : "sk-..."}
+                        placeholder={isKeyConfigured("openai") ? getMaskedKey("openai") || "Nhập khóa mới để thay thế" : "sk-..."}
                         value={openaiKey}
                         onChange={(e) => setOpenaiKey(e.target.value)}
                         className="pr-10"
@@ -338,7 +345,7 @@ export default function SettingsPage() {
                         className="absolute right-0 top-0 h-full px-3 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                         onClick={() => setShowOpenai(!showOpenai)}
                         disabled={!openaiKey}
-                        title={openaiKey ? (showOpenai ? "Hide" : "Show") : "Type a key to show/hide"}
+                        title={openaiKey ? (showOpenai ? "Ẩn" : "Hiện") : "Nhập khóa để hiện/ẩn"}
                       >
                         {showOpenai ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -347,7 +354,7 @@ export default function SettingsPage() {
                       size="icon"
                       onClick={() => handleSaveApiKey("openai", openaiKey)}
                       disabled={!openaiKey || savingKey === "openai"}
-                      title="Save OpenAI key"
+                      title="Lưu khóa OpenAI"
                     >
                       {savingKey === "openai" ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -361,7 +368,7 @@ export default function SettingsPage() {
                         variant="destructive"
                         onClick={() => handleDeleteApiKey("openai")}
                         disabled={deleteApiKeyMutation.isPending}
-                        title="Delete OpenAI key"
+                        title="Xóa khóa OpenAI"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -372,11 +379,11 @@ export default function SettingsPage() {
                 {/* Anthropic Key */}
                 <div>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Anthropic API Key</label>
+                    <label className="text-sm font-medium">Khóa API Anthropic</label>
                     {isKeyConfigured("anthropic") && (
                       <span className="flex items-center text-xs text-green-600 dark:text-green-400">
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Configured
+                        Đã cấu hình
                       </span>
                     )}
                   </div>
@@ -384,7 +391,7 @@ export default function SettingsPage() {
                     <div className="relative flex-1">
                       <Input
                         type={showAnthropic ? "text" : "password"}
-                        placeholder={isKeyConfigured("anthropic") ? "Enter new key to replace" : "sk-ant-..."}
+                        placeholder={isKeyConfigured("anthropic") ? getMaskedKey("anthropic") || "Nhập khóa mới để thay thế" : "sk-ant-..."}
                         value={anthropicKey}
                         onChange={(e) => setAnthropicKey(e.target.value)}
                         className="pr-10"
@@ -394,7 +401,7 @@ export default function SettingsPage() {
                         className="absolute right-0 top-0 h-full px-3 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                         onClick={() => setShowAnthropic(!showAnthropic)}
                         disabled={!anthropicKey}
-                        title={anthropicKey ? (showAnthropic ? "Hide" : "Show") : "Type a key to show/hide"}
+                        title={anthropicKey ? (showAnthropic ? "Ẩn" : "Hiện") : "Nhập khóa để hiện/ẩn"}
                       >
                         {showAnthropic ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -403,7 +410,7 @@ export default function SettingsPage() {
                       size="icon"
                       onClick={() => handleSaveApiKey("anthropic", anthropicKey)}
                       disabled={!anthropicKey || savingKey === "anthropic"}
-                      title="Save Anthropic key"
+                      title="Lưu khóa Anthropic"
                     >
                       {savingKey === "anthropic" ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -417,7 +424,7 @@ export default function SettingsPage() {
                         variant="destructive"
                         onClick={() => handleDeleteApiKey("anthropic")}
                         disabled={deleteApiKeyMutation.isPending}
-                        title="Delete Anthropic key"
+                        title="Xóa khóa Anthropic"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -428,11 +435,11 @@ export default function SettingsPage() {
                 {/* Serper Key */}
                 <div>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Serper API Key</label>
+                    <label className="text-sm font-medium">Khóa API Serper</label>
                     {isKeyConfigured("serper") && (
                       <span className="flex items-center text-xs text-green-600 dark:text-green-400">
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Configured
+                        Đã cấu hình
                       </span>
                     )}
                   </div>
@@ -440,7 +447,7 @@ export default function SettingsPage() {
                     <div className="relative flex-1">
                       <Input
                         type={showSerper ? "text" : "password"}
-                        placeholder={isKeyConfigured("serper") ? "Enter new key to replace" : "Enter Serper API key"}
+                        placeholder={isKeyConfigured("serper") ? getMaskedKey("serper") || "Nhập khóa mới để thay thế" : "Nhập khóa API Serper"}
                         value={serperKey}
                         onChange={(e) => setSerperKey(e.target.value)}
                         className="pr-10"
@@ -450,7 +457,7 @@ export default function SettingsPage() {
                         className="absolute right-0 top-0 h-full px-3 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                         onClick={() => setShowSerper(!showSerper)}
                         disabled={!serperKey}
-                        title={serperKey ? (showSerper ? "Hide" : "Show") : "Type a key to show/hide"}
+                        title={serperKey ? (showSerper ? "Ẩn" : "Hiện") : "Nhập khóa để hiện/ẩn"}
                       >
                         {showSerper ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -459,7 +466,7 @@ export default function SettingsPage() {
                       size="icon"
                       onClick={() => handleSaveApiKey("serper", serperKey)}
                       disabled={!serperKey || savingKey === "serper"}
-                      title="Save Serper key"
+                      title="Lưu khóa Serper"
                     >
                       {savingKey === "serper" ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -473,7 +480,7 @@ export default function SettingsPage() {
                         variant="destructive"
                         onClick={() => handleDeleteApiKey("serper")}
                         disabled={deleteApiKeyMutation.isPending}
-                        title="Delete Serper key"
+                        title="Xóa khóa Serper"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -490,15 +497,15 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Notifications
+              Thông báo
             </CardTitle>
-            <CardDescription>Configure notification preferences</CardDescription>
+            <CardDescription>Cấu hình tùy chọn thông báo</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Email Notifications</p>
-                <p className="text-sm text-muted-foreground">Receive email updates</p>
+                <p className="font-medium">Thông báo qua email</p>
+                <p className="text-sm text-muted-foreground">Nhận cập nhật qua email</p>
               </div>
               <Switch
                 checked={emailNotifications}
@@ -507,8 +514,8 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Execution Alerts</p>
-                <p className="text-sm text-muted-foreground">Get notified on failures</p>
+                <p className="font-medium">Cảnh báo thực thi</p>
+                <p className="text-sm text-muted-foreground">Nhận thông báo khi thất bại</p>
               </div>
               <Switch
                 checked={executionAlerts}
@@ -523,43 +530,43 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Palette className="h-5 w-5" />
-              Appearance
+              Giao diện
             </CardTitle>
-            <CardDescription>Customize the look and feel</CardDescription>
+            <CardDescription>Tùy chỉnh giao diện hiển thị</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Theme</p>
-                <p className="text-sm text-muted-foreground">Light, Dark, or System</p>
+                <p className="font-medium">Chủ đề</p>
+                <p className="text-sm text-muted-foreground">Sáng, Tối, hoặc Hệ thống</p>
               </div>
               <div className="flex gap-2">
                 <Button
                   variant={theme === "light" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTheme("light")}
-                  title="Light theme"
+                  title="Chủ đề sáng"
                 >
                   <Sun className="h-4 w-4 mr-1" />
-                  Light
+                  Sáng
                 </Button>
                 <Button
                   variant={theme === "dark" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTheme("dark")}
-                  title="Dark theme"
+                  title="Chủ đề tối"
                 >
                   <Moon className="h-4 w-4 mr-1" />
-                  Dark
+                  Tối
                 </Button>
                 <Button
                   variant={theme === "system" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTheme("system")}
-                  title="System theme"
+                  title="Theo hệ thống"
                 >
                   <Monitor className="h-4 w-4 mr-1" />
-                  System
+                  Hệ thống
                 </Button>
               </div>
             </div>
@@ -571,17 +578,17 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              Security
+              Bảo mật
             </CardTitle>
-            <CardDescription>Manage security settings</CardDescription>
+            <CardDescription>Quản lý cài đặt bảo mật</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Current Password</label>
+              <label className="text-sm font-medium">Mật khẩu hiện tại</label>
               <div className="relative mt-1">
                 <Input
                   type={showCurrentPassword ? "text" : "password"}
-                  placeholder="Enter current password"
+                  placeholder="Nhập mật khẩu hiện tại"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className="pr-10"
@@ -596,11 +603,11 @@ export default function SettingsPage() {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium">New Password</label>
+              <label className="text-sm font-medium">Mật khẩu mới</label>
               <div className="relative mt-1">
                 <Input
                   type={showNewPassword ? "text" : "password"}
-                  placeholder="Enter new password"
+                  placeholder="Nhập mật khẩu mới"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="pr-10"
@@ -638,11 +645,11 @@ export default function SettingsPage() {
               )}
             </div>
             <div>
-              <label className="text-sm font-medium">Confirm New Password</label>
+              <label className="text-sm font-medium">Xác nhận mật khẩu mới</label>
               <div className="relative mt-1">
                 <Input
                   type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm new password"
+                  placeholder="Xác nhận mật khẩu mới"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={`pr-10 ${passwordsMismatch ? "border-red-500 focus-visible:ring-red-500" : ""} ${passwordsMatch ? "border-green-500 focus-visible:ring-green-500" : ""}`}
@@ -658,11 +665,11 @@ export default function SettingsPage() {
               {passwordsMatch && (
                 <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
                   <CheckCircle className="h-3 w-3" />
-                  Passwords match
+                  Mật khẩu khớp
                 </p>
               )}
               {passwordsMismatch && (
-                <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+                <p className="text-xs text-red-500 mt-1">Mật khẩu không khớp</p>
               )}
             </div>
             <Button
@@ -673,10 +680,10 @@ export default function SettingsPage() {
               {changePasswordMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Changing...
+                  Đang đổi...
                 </>
               ) : (
-                "Change Password"
+                "Đổi mật khẩu"
               )}
             </Button>
           </CardContent>
@@ -687,18 +694,18 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Team
+              Nhóm
             </CardTitle>
-            <CardDescription>Manage your team members</CardDescription>
+            <CardDescription>Quản lý thành viên nhóm của bạn</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Team Members</p>
-                <p className="text-sm text-muted-foreground">Invite and manage members</p>
+                <p className="font-medium">Thành viên nhóm</p>
+                <p className="text-sm text-muted-foreground">Mời và quản lý thành viên</p>
               </div>
               <Button asChild>
-                <a href="/settings/teams">Manage Team</a>
+                <a href="/settings/teams">Quản lý nhóm</a>
               </Button>
             </div>
           </CardContent>

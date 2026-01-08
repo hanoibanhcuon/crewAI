@@ -37,50 +37,50 @@ interface Template {
 const mockTemplates: Template[] = [
   {
     id: "1",
-    name: "Content Research & Writing",
-    description: "A complete crew for researching topics and writing high-quality content",
+    name: "Nghiên cứu & Viết nội dung",
+    description: "Một đội nhóm hoàn chỉnh để nghiên cứu chủ đề và viết nội dung chất lượng cao",
     template_type: "crew",
     author_name: "CrewAI Team",
     downloads: 1234,
     likes: 89,
     rating: 4.8,
-    tags: ["content", "research", "writing"],
+    tags: ["nội dung", "nghiên cứu", "viết bài"],
     is_featured: true,
   },
   {
     id: "2",
-    name: "Data Analysis Pipeline",
-    description: "Automated data analysis and report generation flow",
+    name: "Quy trình phân tích dữ liệu",
+    description: "Phân tích dữ liệu tự động và tạo báo cáo",
     template_type: "flow",
     author_name: "Data Expert",
     downloads: 856,
     likes: 67,
     rating: 4.6,
-    tags: ["data", "analysis", "automation"],
+    tags: ["dữ liệu", "phân tích", "tự động hóa"],
     is_featured: true,
   },
   {
     id: "3",
-    name: "Customer Support Agent",
-    description: "AI agent for handling customer inquiries and support tickets",
+    name: "Tác nhân hỗ trợ khách hàng",
+    description: "Tác nhân AI để xử lý yêu cầu và hỗ trợ khách hàng",
     template_type: "agent",
     author_name: "Support Pro",
     downloads: 2341,
     likes: 156,
     rating: 4.9,
-    tags: ["support", "customer", "chatbot"],
+    tags: ["hỗ trợ", "khách hàng", "chatbot"],
     is_featured: false,
   },
   {
     id: "4",
-    name: "SEO Optimization Crew",
-    description: "Analyze and optimize content for search engines",
+    name: "Đội tối ưu hóa SEO",
+    description: "Phân tích và tối ưu hóa nội dung cho công cụ tìm kiếm",
     template_type: "crew",
     author_name: "SEO Master",
     downloads: 678,
     likes: 45,
     rating: 4.5,
-    tags: ["seo", "optimization", "content"],
+    tags: ["seo", "tối ưu hóa", "nội dung"],
     is_featured: false,
   },
 ];
@@ -89,6 +89,12 @@ const typeIcons = {
   crew: Layers,
   flow: GitBranch,
   agent: Users,
+};
+
+const typeLabels: Record<string, string> = {
+  crew: "Đội nhóm",
+  flow: "Quy trình",
+  agent: "Tác nhân",
 };
 
 export default function MarketplacePage() {
@@ -139,12 +145,12 @@ export default function MarketplacePage() {
 
   return (
     <DashboardLayout
-      title="Marketplace"
+      title="Chợ ứng dụng"
       actions={
         <Button asChild>
           <Link href="/marketplace/new">
             <Plus className="mr-2 h-4 w-4" />
-            Publish Template
+            Đăng mẫu
           </Link>
         </Button>
       }
@@ -154,7 +160,7 @@ export default function MarketplacePage() {
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search templates..."
+            placeholder="Tìm kiếm mẫu..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -166,7 +172,7 @@ export default function MarketplacePage() {
             size="sm"
             onClick={() => setTypeFilter(null)}
           >
-            All
+            Tất cả
           </Button>
           <Button
             variant={typeFilter === "crew" ? "default" : "outline"}
@@ -174,7 +180,7 @@ export default function MarketplacePage() {
             onClick={() => setTypeFilter("crew")}
           >
             <Layers className="mr-2 h-4 w-4" />
-            Crews
+            Đội nhóm
           </Button>
           <Button
             variant={typeFilter === "flow" ? "default" : "outline"}
@@ -182,7 +188,7 @@ export default function MarketplacePage() {
             onClick={() => setTypeFilter("flow")}
           >
             <GitBranch className="mr-2 h-4 w-4" />
-            Flows
+            Quy trình
           </Button>
           <Button
             variant={typeFilter === "agent" ? "default" : "outline"}
@@ -190,7 +196,7 @@ export default function MarketplacePage() {
             onClick={() => setTypeFilter("agent")}
           >
             <Users className="mr-2 h-4 w-4" />
-            Agents
+            Tác nhân
           </Button>
         </div>
       </div>
@@ -206,7 +212,7 @@ export default function MarketplacePage() {
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Star className="h-5 w-5 text-yellow-500" />
-                Featured Templates
+                Mẫu nổi bật
               </h2>
               <div className="grid gap-4 md:grid-cols-2">
                 {featuredTemplates.map((template) => {
@@ -222,11 +228,11 @@ export default function MarketplacePage() {
                               </div>
                               <div>
                                 <CardTitle className="text-lg">{template.name}</CardTitle>
-                                <CardDescription>by {template.author_name || "Unknown"}</CardDescription>
+                                <CardDescription>bởi {template.author_name || "Không rõ"}</CardDescription>
                               </div>
                             </div>
                             <span className="capitalize text-xs bg-secondary px-2 py-1 rounded">
-                              {template.template_type}
+                              {typeLabels[template.template_type] || template.template_type}
                             </span>
                           </div>
                         </CardHeader>
@@ -259,7 +265,7 @@ export default function MarketplacePage() {
                                 {template.rating}
                               </span>
                             </div>
-                            <Button size="sm">Use Template</Button>
+                            <Button size="sm">Sử dụng mẫu</Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -272,7 +278,7 @@ export default function MarketplacePage() {
 
           {/* All Templates */}
           <div>
-            <h2 className="text-lg font-semibold mb-4">All Templates</h2>
+            <h2 className="text-lg font-semibold mb-4">Tất cả mẫu</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {otherTemplates.map((template) => {
                 const TypeIcon = typeIcons[template.template_type as keyof typeof typeIcons] || Layers;
@@ -286,7 +292,7 @@ export default function MarketplacePage() {
                           </div>
                           <div>
                             <CardTitle className="text-base">{template.name}</CardTitle>
-                            <CardDescription className="text-xs">by {template.author_name || "Unknown"}</CardDescription>
+                            <CardDescription className="text-xs">bởi {template.author_name || "Không rõ"}</CardDescription>
                           </div>
                         </div>
                       </CardHeader>
@@ -305,7 +311,7 @@ export default function MarketplacePage() {
                               {template.rating}
                             </span>
                           </div>
-                          <Button size="sm" variant="outline">Use</Button>
+                          <Button size="sm" variant="outline">Sử dụng</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -318,14 +324,14 @@ export default function MarketplacePage() {
           {filteredTemplates.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12">
               <Store className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No templates found</h3>
+              <h3 className="text-lg font-medium">Không tìm thấy mẫu</h3>
               <p className="text-muted-foreground">
-                Try adjusting your search or filters
+                Thử điều chỉnh tìm kiếm hoặc bộ lọc
               </p>
               <Button className="mt-4" asChild>
                 <Link href="/marketplace/new">
                   <Plus className="mr-2 h-4 w-4" />
-                  Publish Your First Template
+                  Đăng mẫu đầu tiên của bạn
                 </Link>
               </Button>
             </div>

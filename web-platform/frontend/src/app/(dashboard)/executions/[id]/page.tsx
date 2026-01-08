@@ -36,7 +36,15 @@ import {
   Cpu,
   Timer,
   FileText,
+  Download,
+  FileJson,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Execution {
   id: string;
@@ -246,6 +254,69 @@ export default function ExecutionDetailPage() {
     }
   };
 
+  // Export functions
+  const exportLogsAsJson = () => {
+    const data = {
+      execution_id: executionId,
+      exported_at: new Date().toISOString(),
+      logs: logs,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    downloadFile(blob, `execution-${executionId}-logs.json`);
+  };
+
+  const exportLogsAsText = () => {
+    const text = logs
+      .map(
+        (log) =>
+          `[${new Date(log.timestamp).toISOString()}] [${log.level.toUpperCase()}]${
+            log.source ? ` [${log.source}]` : ""
+          } ${log.message}`
+      )
+      .join("\n");
+    const blob = new Blob([text], { type: "text/plain" });
+    downloadFile(blob, `execution-${executionId}-logs.txt`);
+  };
+
+  const exportTracesAsJson = () => {
+    const data = {
+      execution_id: executionId,
+      exported_at: new Date().toISOString(),
+      traces: traces,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    downloadFile(blob, `execution-${executionId}-traces.json`);
+  };
+
+  const exportFullReport = () => {
+    const data = {
+      execution_id: executionId,
+      exported_at: new Date().toISOString(),
+      execution: execution,
+      logs: logs,
+      traces: traces,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    downloadFile(blob, `execution-${executionId}-full-report.json`);
+  };
+
+  const downloadFile = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const formatDuration = (ms?: number) => {
     if (!ms) return "-";
     if (ms < 1000) return `${ms}ms`;
@@ -312,6 +383,32 @@ export default function ExecutionDetailPage() {
               Cancel
             </Button>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportLogsAsJson}>
+                <FileJson className="h-4 w-4 mr-2" />
+                Export Logs (JSON)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportLogsAsText}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export Logs (Text)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportTracesAsJson}>
+                <Activity className="h-4 w-4 mr-2" />
+                Export Traces (JSON)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportFullReport}>
+                <Download className="h-4 w-4 mr-2" />
+                Export Full Report
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="sm"

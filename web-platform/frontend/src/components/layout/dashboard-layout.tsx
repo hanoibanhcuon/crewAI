@@ -8,6 +8,7 @@ import { Header } from "./header";
 import { AuthGuard } from "@/components/auth";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsDialog } from "@/components/ui/keyboard-shortcuts-dialog";
+import { CommandPalette } from "@/components/ui/command-palette";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -18,10 +19,11 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, title, actions }: DashboardLayoutProps) {
   const { sidebarOpen } = useUIStore();
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts(
-    undefined, // onOpenSearch - could be implemented later
+    () => setShowCommandPalette(true), // Ctrl+K opens command palette
     () => setShowShortcuts(true)
   );
 
@@ -46,6 +48,16 @@ export function DashboardLayout({ children, title, actions }: DashboardLayoutPro
         <KeyboardShortcutsDialog
           open={showShortcuts}
           onOpenChange={setShowShortcuts}
+        />
+
+        {/* Command Palette */}
+        <CommandPalette
+          open={showCommandPalette}
+          onOpenChange={setShowCommandPalette}
+          onShowShortcuts={() => {
+            setShowCommandPalette(false);
+            setShowShortcuts(true);
+          }}
         />
       </div>
     </AuthGuard>

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useCallback } from "react";
 import { useUIStore } from "@/stores";
 import { cn } from "@/lib/utils";
 import { Bell, Search, User, Menu } from "lucide-react";
@@ -12,8 +13,13 @@ interface HeaderProps {
   children?: React.ReactNode;
 }
 
-export function Header({ title, children }: HeaderProps) {
-  const { sidebarOpen, setMobileMenuOpen } = useUIStore();
+function HeaderComponent({ title, children }: HeaderProps) {
+  const sidebarOpen = useUIStore((state) => state.sidebarOpen);
+  const setMobileMenuOpen = useUIStore((state) => state.setMobileMenuOpen);
+
+  const openMobileMenu = useCallback(() => {
+    setMobileMenuOpen(true);
+  }, [setMobileMenuOpen]);
 
   return (
     <header
@@ -31,7 +37,7 @@ export function Header({ title, children }: HeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setMobileMenuOpen(true)}
+          onClick={openMobileMenu}
           className="md:hidden"
         >
           <Menu className="h-5 w-5" />
@@ -45,7 +51,7 @@ export function Header({ title, children }: HeaderProps) {
         <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search..."
+            placeholder="Tìm kiếm..."
             className="w-64 pl-9"
           />
         </div>
@@ -66,3 +72,5 @@ export function Header({ title, children }: HeaderProps) {
     </header>
   );
 }
+
+export const Header = memo(HeaderComponent);

@@ -1,16 +1,34 @@
-import axios from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
+// Create axios instance with optimized settings
 export const api = axios.create({
   baseURL: `${API_URL}/api/v1`,
   headers: {
     "Content-Type": "application/json",
   },
+  // Add timeout to prevent hanging requests
+  timeout: 30000,
 });
 
+// Request queue for rate limiting
+let isRefreshing = false;
+let failedQueue: { resolve: (value?: unknown) => void; reject: (reason?: unknown) => void }[] = [];
+
+const processQueue = (error: AxiosError | null, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Add auth token to requests
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("access_token");
     if (token) {
@@ -20,16 +38,63 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle auth errors
+// Handle auth errors with token refresh
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("access_token");
-        window.location.href = "/login";
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // If it's a network error or timeout, don't try to refresh
+    if (!error.response) {
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Try to refresh token
+        const refreshResponse = await api.post("/auth/refresh");
+        const { access_token } = refreshResponse.data;
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("access_token", access_token);
+        }
+
+        api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+        processQueue(null, access_token);
+
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError as AxiosError, null);
+
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("access_token");
+          // Only redirect if not already on login page
+          if (!window.location.pathname.includes("/login")) {
+            window.location.href = "/login";
+          }
+        }
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
   }
 );
@@ -99,6 +164,8 @@ export const flowsApi = {
   update: (id: string, data: any) => api.patch(`/flows/${id}`, data),
   delete: (id: string) => api.delete(`/flows/${id}`),
   duplicate: (id: string) => api.post(`/flows/${id}/duplicate`),
+  deploy: (id: string, environment: string = "production") =>
+    api.post(`/flows/${id}/deploy`, null, { params: { environment } }),
   addStep: (flowId: string, data: any) =>
     api.post(`/flows/${flowId}/steps`, data),
   updateStep: (flowId: string, stepId: string, data: any) =>

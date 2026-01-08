@@ -73,6 +73,7 @@ class APIKeyResponse(BaseModel):
     """API Key response schema."""
     provider: str
     is_set: bool
+    masked_key: Optional[str] = None  # e.g., "sk-...abc123"
     last_updated: Optional[datetime] = None
 
 

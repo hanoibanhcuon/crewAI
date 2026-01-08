@@ -52,6 +52,12 @@ interface Crew {
   environment?: string;
 }
 
+const processLabels: Record<string, string> = {
+  sequential: "tuần tự",
+  hierarchical: "phân cấp",
+  parallel: "song song",
+};
+
 export default function CrewsPage() {
   const [search, setSearch] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -75,12 +81,12 @@ export default function CrewsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["crews"] });
-      toast.success("Crew deleted successfully");
+      toast.success("Đã xóa đội nhóm thành công");
       setDeleteDialogOpen(false);
       setSelectedCrew(null);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to delete crew");
+      toast.error(error.response?.data?.detail || "Không thể xóa đội nhóm");
     },
   });
 
@@ -92,10 +98,10 @@ export default function CrewsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["crews"] });
-      toast.success("Crew duplicated successfully");
+      toast.success("Đã sao chép đội nhóm thành công");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to duplicate crew");
+      toast.error(error.response?.data?.detail || "Không thể sao chép đội nhóm");
     },
   });
 
@@ -107,10 +113,10 @@ export default function CrewsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["crews"] });
-      toast.success("Crew deployed successfully");
+      toast.success("Đã triển khai đội nhóm thành công");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Failed to deploy crew");
+      toast.error(error.response?.data?.detail || "Không thể triển khai đội nhóm");
     },
   });
 
@@ -145,7 +151,7 @@ export default function CrewsPage() {
 
   if (isLoading) {
     return (
-      <DashboardLayout title="Crews">
+      <DashboardLayout title="Đội nhóm">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -155,11 +161,11 @@ export default function CrewsPage() {
 
   if (error) {
     return (
-      <DashboardLayout title="Crews">
+      <DashboardLayout title="Đội nhóm">
         <div className="flex flex-col items-center justify-center h-64">
-          <p className="text-destructive mb-4">Failed to load crews</p>
+          <p className="text-destructive mb-4">Không thể tải danh sách đội nhóm</p>
           <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["crews"] })}>
-            Retry
+            Thử lại
           </Button>
         </div>
       </DashboardLayout>
@@ -168,12 +174,12 @@ export default function CrewsPage() {
 
   return (
     <DashboardLayout
-      title="Crews"
+      title="Đội nhóm"
       actions={
         <Button asChild>
           <Link href="/crews/new">
             <Plus className="mr-2 h-4 w-4" />
-            New Crew
+            Đội nhóm mới
           </Link>
         </Button>
       }
@@ -183,7 +189,7 @@ export default function CrewsPage() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search crews..."
+            placeholder="Tìm kiếm đội nhóm..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -202,7 +208,7 @@ export default function CrewsPage() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">{crew.name}</CardTitle>
-                  <CardDescription className="capitalize">{crew.process || "sequential"} process</CardDescription>
+                  <CardDescription className="capitalize">Quy trình {processLabels[crew.process] || crew.process || "tuần tự"}</CardDescription>
                 </div>
               </div>
               <DropdownMenu>
@@ -214,30 +220,30 @@ export default function CrewsPage() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => handleRun(crew)}>
                     <Play className="mr-2 h-4 w-4" />
-                    Run
+                    Chạy
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href={`/crews/${crew.id}`}>
                       <Edit className="mr-2 h-4 w-4" />
-                      Edit
+                      Chỉnh sửa
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleDuplicate(crew)}>
                     <Copy className="mr-2 h-4 w-4" />
-                    Duplicate
+                    Sao chép
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => handleDeploy(crew, "development")}>
                     <Rocket className="mr-2 h-4 w-4" />
-                    Deploy to Dev
+                    Triển khai Dev
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleDeploy(crew, "staging")}>
                     <Rocket className="mr-2 h-4 w-4" />
-                    Deploy to Staging
+                    Triển khai Staging
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleDeploy(crew, "production")}>
                     <Rocket className="mr-2 h-4 w-4" />
-                    Deploy to Prod
+                    Triển khai Production
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -245,7 +251,7 @@ export default function CrewsPage() {
                     onClick={() => handleDelete(crew)}
                   >
                     <Trash className="mr-2 h-4 w-4" />
-                    Delete
+                    Xóa
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -254,10 +260,10 @@ export default function CrewsPage() {
               <p className="text-sm text-muted-foreground mb-4">{crew.description}</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
-                  {crew.agents_count || 0} agents
+                  {crew.agents_count || 0} tác nhân
                 </span>
                 <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium">
-                  {crew.tasks_count || 0} tasks
+                  {crew.tasks_count || 0} nhiệm vụ
                 </span>
                 {crew.is_deployed && (
                   <span className="inline-flex items-center rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2.5 py-0.5 text-xs font-medium">
@@ -268,7 +274,7 @@ export default function CrewsPage() {
               <div className="flex gap-2">
                 <Button size="sm" className="flex-1" onClick={() => handleRun(crew)}>
                   <Play className="mr-2 h-4 w-4" />
-                  Run
+                  Chạy
                 </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/crews/${crew.id}`}>
@@ -292,14 +298,14 @@ export default function CrewsPage() {
       {filteredCrews.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12">
           <Layers className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">No crews found</h3>
+          <h3 className="text-lg font-medium">Không tìm thấy đội nhóm</h3>
           <p className="text-muted-foreground">
-            Create your first crew to get started
+            Tạo đội nhóm đầu tiên của bạn để bắt đầu
           </p>
           <Button className="mt-4" asChild>
             <Link href="/crews/new">
               <Plus className="mr-2 h-4 w-4" />
-              Create Crew
+              Tạo đội nhóm
             </Link>
           </Button>
         </div>
@@ -309,13 +315,13 @@ export default function CrewsPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Crew</AlertDialogTitle>
+            <AlertDialogTitle>Xóa đội nhóm</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{selectedCrew?.name}&quot;? This action cannot be undone.
+              Bạn có chắc chắn muốn xóa &quot;{selectedCrew?.name}&quot;? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -323,7 +329,7 @@ export default function CrewsPage() {
               {deleteMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Delete"
+                "Xóa"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
