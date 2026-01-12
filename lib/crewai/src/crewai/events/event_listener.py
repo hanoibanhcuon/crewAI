@@ -13,6 +13,8 @@ from crewai.events.types.a2a_events import (
     A2ADelegationCompletedEvent,
     A2ADelegationStartedEvent,
     A2AMessageSentEvent,
+    A2APollingStartedEvent,
+    A2APollingStatusEvent,
     A2AResponseReceivedEvent,
 )
 from crewai.events.types.agent_events import (
@@ -207,10 +209,9 @@ class EventListener(BaseEventListener):
         @crewai_event_bus.on(TaskCompletedEvent)
         def on_task_completed(source: Any, event: TaskCompletedEvent) -> None:
             # Handle telemetry
-            span = self.execution_spans.get(source)
+            span = self.execution_spans.pop(source, None)
             if span:
                 self._telemetry.task_ended(span, source, source.agent.crew)
-            self.execution_spans[source] = None
 
             # Pass task name if it exists
             task_name = get_task_name(source)
@@ -220,11 +221,10 @@ class EventListener(BaseEventListener):
 
         @crewai_event_bus.on(TaskFailedEvent)
         def on_task_failed(source: Any, event: TaskFailedEvent) -> None:
-            span = self.execution_spans.get(source)
+            span = self.execution_spans.pop(source, None)
             if span:
                 if source.agent and source.agent.crew:
                     self._telemetry.task_ended(span, source, source.agent.crew)
-                self.execution_spans[source] = None
 
             # Pass task name if it exists
             task_name = get_task_name(source)
@@ -606,6 +606,23 @@ class EventListener(BaseEventListener):
                 event.final_result,
                 event.error,
                 event.total_turns,
+            )
+
+        @crewai_event_bus.on(A2APollingStartedEvent)
+        def on_a2a_polling_started(_: Any, event: A2APollingStartedEvent) -> None:
+            self.formatter.handle_a2a_polling_started(
+                event.task_id,
+                event.polling_interval,
+                event.endpoint,
+            )
+
+        @crewai_event_bus.on(A2APollingStatusEvent)
+        def on_a2a_polling_status(_: Any, event: A2APollingStatusEvent) -> None:
+            self.formatter.handle_a2a_polling_status(
+                event.task_id,
+                event.state,
+                event.elapsed_seconds,
+                event.poll_count,
             )
 
         # ----------- MCP EVENTS -----------
